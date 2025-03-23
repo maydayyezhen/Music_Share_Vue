@@ -65,7 +65,7 @@ const register = async () => {
       newUser.value.username = username.value;
       newUser.value.password = password.value;
       newUser.value.nickname = username.value;
-      console.log(`🚀 正在请求: ${API_BASE_URL}/users`);
+      console.log(`🚀 正在请 求: ${API_BASE_URL}/users`);
       const response = await axios.post(`${API_BASE_URL}/users`, newUser.value);
       console.log("🚀 请求成功:", response.data);
       alert('注册成功');
