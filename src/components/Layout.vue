@@ -2,30 +2,40 @@
 import LoginDialog from "@/components/LoginDialog.vue";
 import {ref} from "vue"; // 引入弹窗组件
 import { useAuthStore } from '@/stores/authStore';
+import router from "@/router/index.js";
 const authStore = useAuthStore();
 const showLogin = ref(false)
 const closeLogin = () => {
   showLogin.value = false // 设置 showLogin 为 false，隐藏登录组件
 }
-const section = ref(''); // 默认选择用户
+const isOpen = ref(false);
+const toggleMenu = () => {
+  isOpen.value = !isOpen.value;
+}
 
-const handleClick = (word) => {
-  section.value = word;
-  console.log(`${section.value} 被点击了`);
-  // 你可以根据点击的角色做进一步的处理
+const selectItem = (item) => {
+  console.log('选择了:', item);
+  isOpen.value = false;
 };
+
 </script>
 <template>
     <!-- 顶部导航栏 -->
     <header class="header">
       <link href="https://fonts.googleapis.com/css2?family=Lobster&display=swap" rel="stylesheet">
       <h1>Music Share</h1>
-      <div class="nav-links">
-        <h3 @click="handleClick('music_db')" :class="{'active': section === 'music_db'}">音乐库</h3>
-        <h3 @click="handleClick('my_music')" :class="{'active': section === 'my_music'}">我的音乐</h3>
+      <div v-if="authStore.isLoggedIn" class="nav-links">
+        <h3 @click="authStore.setSection('music_db')" :class="{'active': authStore.section === 'music_db'}">音乐库</h3>
+        <h3 v-if="authStore.role==='user'" @click="authStore.setSection('my_music')" :class="{'active': authStore.section === 'my_music'}">我的音乐</h3>
       </div>
       <button v-if="!authStore.isLoggedIn" class="login-button"  @click="showLogin = true">登录</button>
-      <button v-else class="login-button"  @click="authStore.logout">退出</button>
+      <button v-else class="login-button"  @click="toggleMenu">菜单</button>
+      <!-- 下拉菜单 -->
+      <ul v-if="isOpen" class="menu">
+        <li @click="selectItem('我的信息')">我的信息</li>
+        <li @click="selectItem('设置')">设置</li>
+        <li @click="authStore.logout">退出登录</li>
+      </ul>
     </header>
   <!-- 遮罩层 -->
   <div v-if="showLogin" class="overlay" @click="closeLogin"></div>
@@ -113,4 +123,28 @@ header h1 {
   background: rgba(0, 0, 0, 0.5); /* 半透明遮罩层 */
   z-index: 1000; /* 遮罩层在最上面 */
 }
+
+.menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border: 1px solid #ddd;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  list-style: none;
+  padding: 0;
+  margin: 5px 0;
+  width: 120px;
+}
+.menu li {
+  padding: 10px;
+  cursor: pointer;  /* 鼠标变为手形 */
+  transition: background 0.3s ease-in-out;
+}
+
+.menu li:hover {
+  background: #f0f0f0;  /* 悬停时变成浅灰色 */
+  color: #333;  /* 文字颜色稍微变深 */
+}
+
 </style>

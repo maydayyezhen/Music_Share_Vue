@@ -1,30 +1,32 @@
 <template>
     <div class="modal-content">
+      <div v-if="!registered" class="login">
       <div class="user-admin">
         <!-- 用户按钮 -->
-        <h2
-            @click="handleClick('user')"
-            :class="{'active': role === 'user'}"
-        >
-          用户
-        </h2>
+        <h2 @click="authStore.setRole('user')" :class="{'active': authStore.role === 'user'}">用户</h2>
         <!-- 管理员按钮 -->
-        <h2
-            @click="handleClick('admin')"
-            :class="{'active': role === 'admin'}"
-        >
-          管理员
-        </h2>
+        <h2 @click="authStore.setRole('admin')" :class="{'active': authStore.role === 'admin'}">管理员</h2>
       </div>
       <!-- 用户名输入框 -->
       <input type="text" placeholder="请输入账号" v-model="username" />
       <!-- 密码输入框 -->
       <input type="password" placeholder="请输入密码" v-model="password" />
-      <div class="actions">
+      <div class="login-actions">
         <!-- 登录按钮 -->
-        <button @click="authStore.login(); login();">登录</button>
+        <button @click="login();">登录</button>
         <!-- 取消按钮，点击关闭弹窗 -->
         <button @click="$emit('close')">取消</button>
+        <h3 @click="setRegister" :class="{'active': registered}">注册</h3>
+      </div>
+      </div>
+      <div v-else class="register">
+        <h3>注册</h3>
+        <input type="text" placeholder="请输入账号" v-model="username" />
+        <input type="password" placeholder="请输入密码" v-model="password" />
+        <div class="register-actions">
+        <button @click="register">确认</button>
+        <button @click="setRegister">取消</button>
+        </div>
       </div>
     </div>
 </template>
@@ -33,27 +35,71 @@
 import { ref } from 'vue'
 import router from "@/router/index.js";
 import { useAuthStore } from '@/stores/authStore';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+import axios from "axios";
 const authStore = useAuthStore();
+const emit = defineEmits(['close']);
+
+const username = ref('');
+const password = ref('');
 
 // 创建响应式变量保存输入的用户名和密码
-const username = ref('')
-const password = ref('')
-const role = ref('user'); // 默认选择用户
+const newUser = ref({ username: '', password: '', nickname: ''});
+const registered = ref(false);
 
-const handleClick = (word) => {
-  role.value = word;
-  console.log(`${role.value} 被点击了`);
-  // 你可以根据点击的角色做进一步的处理
-};
-
-// 登录函数：这里只做演示，实际可以调用后端 API
-const login = () => {
-  console.log(`登录用户名: ${username.value}, 密码: ${password.value}`)
-  if(role.value === 'admin') {
-    router.push('/admin');
+const setRegister = () => {
+  registered.value = !registered.value;
+}
+const register = async () => {
+  console.log(`注册用户名: ${username.value}, 密码: ${password.value}`)
+  let user= ref({});
+  try {
+    const url = `/users/${encodeURIComponent(username.value)}`;
+    console.log(`🚀 正在请求: ${url}`);
+    const response = await axios.get(`${API_BASE_URL}/users/${encodeURIComponent(username.value)}`);
+    user = response.data;
+    if (Object.keys(user).length > 0) {
+      alert('用户名已存在');
+    }
+    else{
+      newUser.value.username = username.value;
+      newUser.value.password = password.value;
+      newUser.value.nickname = username.value;
+      console.log(`🚀 正在请求: ${API_BASE_URL}/users`);
+      const response = await axios.post(`${API_BASE_URL}/users`, newUser.value);
+      console.log("🚀 请求成功:", response.data);
+      alert('注册成功');
+      registered.value = false;
+    }
+  } catch (error) {
+    console.error("❌ 按用户名查询用户数据失败:", error);
   }
-  else {
-    router.push('/user');
+}
+
+const login = async () => {
+  console.log(`登录用户名: ${username.value}, 密码: ${password.value}`)
+  console.log(`登录角色: ${authStore.role}`)
+  let user = ref({});//用户或管理员
+  try {
+    const url = `/users/${encodeURIComponent(username.value)}`;
+    console.log(`🚀 正在请求: ${url}`);
+    const response = await axios.get(`${API_BASE_URL}/${authStore.role}s/${encodeURIComponent(username.value)}`);
+    user = response.data;
+    if (Object.keys(user).length > 0) {
+      if (user.password === password.value) {
+        alert('登录成功');
+        authStore.login();
+        authStore.saveUser(user);
+        emit('close');
+        await router.push(`/${authStore.role}`);
+      } else {
+        alert('密码错误');
+      }
+    } else {
+      alert('用户名不存在');
+    }
+  } catch (error) {
+    console.error("❌ 按用户名查询用户数据失败:", error);
   }
 }
 </script>
@@ -63,9 +109,9 @@ const login = () => {
 .user-admin {
   display: flex;
   gap: 20px; /* 可选，控制两者之间的间距 */
+  justify-content: center; /* 水平居中 */
 }
 
-/* 设置按钮的基础样式 */
 /* 默认状态 */
 h2 {
   display: inline-block;
@@ -87,6 +133,19 @@ h2:hover {
 h2.active {
   background-color: #dc3545; /* 红色背景 */
   color: white; /* 文本变白 */
+}
+
+.login {
+  justify-content: center;
+}
+
+.login h3{
+  color: cornflowerblue;
+  cursor: pointer;
+}
+
+.login h3:hover {
+  color: #a86666;
 }
 
 
@@ -117,7 +176,19 @@ input {
   padding: 8px;
 }
 
-.actions button {
+.login-actions {
+  width: 250px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  position: relative;
+}
+.login-actions >:last-child {
+  position: absolute;
+  right: 0;
+}
+
+button {
   margin: 5px;
   padding: 8px 16px;
   cursor: pointer;
