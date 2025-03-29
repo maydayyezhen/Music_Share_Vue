@@ -12,7 +12,7 @@ const audioPlayer = ref(null);
 
 const getAllSongs = async () => {
   const url = `${API_BASE_URL}/songs`;
-  console.log(`🚀 正在请求: ${url}`);
+  console.log(`🚀 正在请 求: ${url}`);
   const response = await axios.get(`${API_BASE_URL}/songs`);
   songs.value = response.data;
 }
