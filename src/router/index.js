@@ -4,6 +4,7 @@ import User from '@/components/User.vue'
 import Admin from '@/components/Admin.vue'
 import MyMusic from '@/components/MyMusic.vue'
 import MusicDB from '@/components/MusicDB.vue'
+import { useAuthStore } from '@/stores/authStore';
 
 const routes = [
     { path: '/', component: Home },
@@ -18,4 +19,13 @@ const router = createRouter({
     routes
 })
 
-export default router
+router.beforeEach((to, from, next) => {
+    const authStore = useAuthStore();
+    if (!authStore.isLoggedIn && to.path !== '/') {
+        next('/'); // 未登录且访问受保护页面，重定向到主页
+    } else {
+        next(); // 其他情况放行
+    }
+});
+
+export default router;

@@ -1,15 +1,18 @@
 <script setup>
 import {ref} from "vue";
-
+import axios from "axios";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const newSong = ref({ title: '', artist: '', duration: '', fileUrl: '',coverUrl: '' });
-const selectedFile = ref(null);
+const selectedSongFile = ref(null);
+const selectedImgFile = ref(null);
 const isModalOpen = ref(false);
+const imgUrl = ref('');
 const modalImageUrl = ref('');
 const selectCover = (event) => {
   const file = event.target.files[0];
   if (file) {
-    selectedFile.value = file;
-    newSong.value.coverUrl = URL.createObjectURL(file); // 生成封面的本地 URL（用于预览）
+    selectedImgFile.value = file;
+    imgUrl.value = URL.createObjectURL(file);
     console.log("📂 选中文件:", file.name);
   } else {
     console.warn("⚠ 没有选中文件");
@@ -18,12 +21,28 @@ const selectCover = (event) => {
 const selectMusic = (event) => {
   const file = event.target.files[0];
   if (file) {
-    selectedFile.value = file;
-    newSong.value.fileUrl = URL.createObjectURL(file);
+    selectedSongFile.value = file;
     console.log("📂 选中文件:", file.name);
   } else {
     console.warn("⚠ 没有选中文件");
   }
+}
+const emit = defineEmits(['customEvent']);
+const upload = async () => {
+  const formData = new FormData();
+  formData.append('imgFile', selectedImgFile.value);
+  formData.append('songFile', selectedSongFile.value);
+  const response = await axios.post(`${API_BASE_URL}/file/upload`, formData,{
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+  const  paths = response.data;
+  const normalizePath = (path) => path.replace(/\\/g, '/');
+  newSong.value.coverUrl = encodeURIComponent(normalizePath(paths[0]));
+  newSong.value.fileUrl = encodeURIComponent(normalizePath(paths[1]));
+
+  await axios.post(`${API_BASE_URL}/songs`, newSong.value);
+  alert("上传成功");
+  emit('close');
 }
 const openImage = (url) => {
   modalImageUrl.value = url;
@@ -55,13 +74,14 @@ const closeImage = () => {
     </div>
 
   <div class="album-cover">
-      <img v-if="newSong.coverUrl" :src="newSong.coverUrl" alt="Album Cover" @click="openImage(newSong.coverUrl)"/>
+      <img v-if="imgUrl" :src="imgUrl" alt="Album Cover" @click="openImage(imgUrl)"/>
       <p v-else>No cover selected</p>
     </div>
     <div v-if="isModalOpen" class="modal" @click="closeImage">
       <img :src="modalImageUrl" class="modal-content" @click.stop alt="专辑封面">
     </div>
-    <button>Add</button>
+    <button @click="upload">Add</button>
+    <button @click="$emit('close')"> 退出 </button>
 </div>
 </template>
 

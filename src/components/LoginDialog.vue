@@ -7,7 +7,7 @@
         <!-- 管理员按钮 -->
         <h2 @click="authStore.setRole('admin')" :class="{'active': authStore.role === 'admin'}">管理员</h2>
       </div>
-      <!-- 用户名输入框 -->
+        <!-- 用户名输入框 -->
       <input type="text" placeholder="请输入账号" v-model="username" />
       <!-- 密码输入框 -->
       <input type="password" placeholder="请输入密码" v-model="password" />
