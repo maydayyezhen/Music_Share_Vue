@@ -14,13 +14,13 @@ export const useAuthStore = defineStore('auth', () => {
         section.value = newSection;
         localStorage.setItem('section', section.value);
         if (section.value === 'my_music') {
-            router.push('/my_music').then(r => {});
+            router.push('/my_music').catch(() => {});
         }
         if (section.value === 'music_db') {
-            router.push('/music_db').then(r => {});
+            router.push('/music_db').catch(() => {});
         }
         if (section.value === 'user_manage') {
-            router.push('/user_manage').then(r => {});
+            router.push('/user_manage').catch(() => {});
         }
     }
 
@@ -34,7 +34,7 @@ export const useAuthStore = defineStore('auth', () => {
         isLoggedIn.value = false;
         // 清理 localStorage 中的所有用户数据
         ['isLoggedIn','role','section','user'].forEach(item => localStorage.removeItem(item));
-        router.push('/').then(r => {});
+        router.push('/').catch(() => {});
     };
 
     const saveUser = (newUser) => {

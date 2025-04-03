@@ -115,13 +115,4 @@ button {
   top: 100px;
   left: 0;
 }
-.overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5); /* 半透明遮罩层 */
-  z-index: 1000; /* 遮罩层在最上面 */
-}
 </style>
