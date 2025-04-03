@@ -1,9 +1,7 @@
 <script setup>
-import Layout from "@/components/Layout.vue"; // 引入弹窗组件
 </script>
 
 <template>
-  <layout/>
   <h1>欢迎来到主页！</h1>
 </template>
 

@@ -15,6 +15,8 @@ const toggleMenu = () => {
 
 const selectItem = (item) => {
   console.log('选择了:', item);
+  if (item === '我的信息')
+    router.push('/user_info');
   isOpen.value = false;
 };
 
@@ -26,7 +28,8 @@ const selectItem = (item) => {
       <h1>Music Share</h1>
       <div v-if="authStore.isLoggedIn" class="nav-links">
         <h3 @click="authStore.setSection('music_db')" :class="{'active': authStore.section === 'music_db'}">音乐库</h3>
-        <h3 v-if="authStore.role==='user'" @click="authStore.setSection('my_music')" :class="{'active': authStore.section === 'my_music'}">我的音乐</h3>
+        <h3 v-if="authStore.user.role==='user'" @click="authStore.setSection('my_music')" :class="{'active': authStore.section === 'my_music'}">我的音乐</h3>
+        <h3 v-if="authStore.user.role==='admin'" @click="authStore.setSection('user_manage')" :class="{'active': authStore.section === 'user_manage'}">用户管理</h3>
       </div>
       <button v-if="!authStore.isLoggedIn" class="login-button"  @click="showLogin = true">登录</button>
       <button v-else class="login-button"  @click="toggleMenu">菜单</button>

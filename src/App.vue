@@ -1,8 +1,12 @@
 <script setup>
+import Layout from "@/components/Layout.vue";
+import MusicPlayer from "@/components/MusicPlayer.vue";
 </script>
 
 <template>
-  <router-view />
+    <Layout/>
+    <router-view />
+    <MusicPlayer/>
 </template>
 
 <style scoped>
