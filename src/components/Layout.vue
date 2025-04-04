@@ -31,7 +31,7 @@ const selectItem = (item) => {
         <h3 v-if="authStore.user.role==='user'" @click="authStore.setSection('my_music')" :class="{'active': authStore.section === 'my_music'}">我的音乐</h3>
         <h3 v-if="authStore.user.role==='admin'" @click="authStore.setSection('user_manage')" :class="{'active': authStore.section === 'user_manage'}">用户管理</h3>
       </div>
-      <button v-if="!authStore.isLoggedIn" class="login-button"  @click="showLogin = true">登录</button>
+      <button v-if="!authStore.isLoggedIn" class="login-button" @click="showLogin = true">登录</button>
       <button v-else class="login-button"  @click="toggleMenu">菜单</button>
       <!-- 下拉菜单 -->
       <ul v-if="isOpen" class="menu">
@@ -86,11 +86,7 @@ h3:hover {
   color: white; /* 文本变白 */
 }
 
-/* 选中状态 */
-h3.active {
-  background-color: #dc3545; /* 红色背景 */
-  color: white; /* 文本变白 */
-}
+
 
 header h1 {
   margin: 0;

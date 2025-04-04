@@ -2,7 +2,7 @@
 import {onMounted, ref} from "vue";
 import ArtistModal from "@/components/ArtistModal.vue";
 import AlbumModal from "@/components/AlbumModal.vue";
-import {apiGetAlbumByArtistId, apiGetAllAlbums, apiGetCoverFileUrlById} from "@/api/album-api.js";
+import {apiGetAlbumsByArtistId, apiGetAllAlbums, apiGetCoverFileUrlById} from "@/api/album-api.js";
 import {apiGetAllArtists, apiGetArtistAvatarFileUrl} from "@/api/artist-api.js";
 import {apiCreateSong, apiUploadAudioFile} from "@/api/song-api.js";
 import {Artist} from "@/models/artist.js";
@@ -27,7 +27,7 @@ const getAllAlbums = async () => {
 }
 
 const getAlbumsByArtistId = async (artistId) => {
-  const response = await apiGetAlbumByArtistId(artistId)
+  const response = await apiGetAlbumsByArtistId(artistId)
   albums.value = response.data;
 }
 

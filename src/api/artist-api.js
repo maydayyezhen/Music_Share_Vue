@@ -7,6 +7,9 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 export const apiGetAllArtists = () => {
     return axios.get(`${API_BASE_URL}/artists`);
 }
+export const apiGetArtistById = (id) => {
+    return axios.get(`${API_BASE_URL}/artists/${id}`);
+}
 
 
 //POST

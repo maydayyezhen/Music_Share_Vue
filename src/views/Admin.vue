@@ -4,7 +4,7 @@ const authStore = useAuthStore();
 </script>
 
 <template>
-  你好，管理员！{{authStore.user.username}}
+  你好，管理员！{{ authStore.user.username }}
 </template>
 
 <style scoped>

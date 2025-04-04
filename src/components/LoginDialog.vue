@@ -45,7 +45,6 @@ const login = async () => {
       authStore.login();
       authStore.saveUser(user);
       emit('close');
-      authStore.setRole(user.role);
       await router.push(`/${user.role}`);
     } else {
       alert('密码错误');

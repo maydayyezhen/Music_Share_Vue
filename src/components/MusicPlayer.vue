@@ -1,7 +1,7 @@
 <script setup>
-import {musicStore} from "@/stores/musicStore.js";
+import {useMusicStore} from "@/stores/musicStore.js";
 import {apiGetAudioFileUrlById} from "@/api/song-api.js";
-const currentMusic = musicStore();
+const currentMusic = useMusicStore();
 </script>
 
 <template>

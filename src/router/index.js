@@ -7,6 +7,7 @@ import MusicDB from '@/views/MusicDB.vue'
 import UserManage from "@/views/UserManage.vue";
 import UserInfo from "@/views/UserInfo.vue";
 import { useAuthStore } from '@/stores/authStore';
+import Artist from "@/views/Artist.vue";
 
 const routes = [
     { path: '/', component: Home },
@@ -15,7 +16,8 @@ const routes = [
     { path: '/my_music', component: MyMusic },
     { path: '/music_db', component: MusicDB },
     { path: '/user_manage', component: UserManage },
-    { path: '/user_info', component: UserInfo }
+    { path: '/user_info', component: UserInfo },
+    { path: "/artist/:id", component: Artist }
 ]
 
 const router = createRouter({
