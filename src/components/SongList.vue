@@ -49,6 +49,10 @@ const goToArtist = (artistId) => {
   router.push(`/artist/${artistId}`);
 }
 
+const goToAlbum = (albumId) => {
+  router.push(`/album/${albumId}`);
+}
+
 
 </script>
 
@@ -64,11 +68,11 @@ const goToArtist = (artistId) => {
         <div class="song-info">
           <div class="song-title">{{ song.title }}</div>
           <span class="artist-name" @click="goToArtist(song.artist.id)">{{ song.artist.name }}</span>
-          <div class="song-meta">{{ song.album.title }} | {{ song.duration }}</div>
+          <div class="song-meta" @click="goToAlbum(song.album.id)">{{ song.album.title }} | {{ song.duration }}</div>
         </div>
         <button @click="playSong(song)">播放</button>
-        <button v-if="authStore.user.role === 'admin'&& route.path.startsWith('/artist')" @click="deleteSong(song)">删除</button>
-        <button v-if="authStore.user.role === 'admin'&& route.path.startsWith('/artist')" @click="startEditSong(song)">更新</button>
+        <button v-if="authStore.user.role === 'admin'" @click="deleteSong(song)">删除</button>
+        <button v-if="authStore.user.role === 'admin'" @click="startEditSong(song)">更新</button>
         <div v-if="editingSong && editingSong.id === song.id">
           <input type="text" v-model="editingSong.title" placeholder="歌曲名称">
           <input type="text" v-model="editingSong.duration" placeholder="时长">
@@ -176,6 +180,11 @@ li:hover {
   margin-top: 4px;
 }
 
+.song-meta:hover{
+  text-decoration: underline;
+  cursor: pointer;
+  color: #3498db;
+}
 
 button {
   padding: 8px 12px;

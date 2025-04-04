@@ -4,67 +4,54 @@ import{Artist} from "@/models/artist.js";
 import {apiGetArtistAvatarFileUrl, apiGetArtistById} from "@/api/artist-api.js";
 import {useRoute} from "vue-router";
 import {Album} from "@/models/album.js";
-import {apiGetAlbumsByArtistId, apiGetCoverFileUrlById} from "@/api/album-api.js";
+import {apiGetAlbumsByArtistId, apiGetCoverFileUrlById, apiGetAlbumsByAlbumId} from "@/api/album-api.js";
 import {Song} from "@/models/song.js";
-import {apiGetSongsByArtistId} from "@/api/song-api.js";
+import {apiGetSongsByArtistId, apiGetSongsByAlbumId} from "@/api/song-api.js";
 import SongList from "@/components/SongList.vue";
-import router from "@/router/index.js";
 const route = useRoute();
 const artist = ref({...Artist})
-const albums = ref([{...Album}]);
+const album = ref([{...Album}]);
 const songs = ref([{...Song}]);
 
-const getSongsByArtistId = async () => {
-  const response = await apiGetSongsByArtistId(route.params.id);
-  songs.value = response.data;
-}
-
-const goToAlbum = (albumId) => {
-  router.push(`/album/${albumId}`);
-}
-
 onMounted(async () => {
-  const artistResponse = await apiGetArtistById(route.params.id);
-  artist.value = artistResponse.data;
-  const albumsResponse = await apiGetAlbumsByArtistId(route.params.id);
-  albums.value = albumsResponse.data;
-  await getSongsByArtistId(route.params.id);
+  const albumsResponse = await apiGetAlbumsByAlbumId(route.params.id);
+  album.value = albumsResponse.data;
+  const songsResponse = await apiGetSongsByAlbumId(route.params.id);
+  songs.value = songsResponse.data;
 })
 
 </script>
 
 <template>
-  <div class="artist-container">
-    <!-- 歌手信息 -->
-    <div class="artist-header">
-      <img :src="apiGetArtistAvatarFileUrl(artist.id)" alt="Artist Image" class="artist-avatar"/>
-      <div class="artist-info">
-        <h1>{{ artist.name }}</h1>
-        <p class="artist-bio">{{ artist.bio }}</p>
+  <div class="album-container">
+    <!-- 专辑信息 -->
+    <div class="album-header">
+      <img :src="apiGetCoverFileUrlById(album.id)" alt="专辑封面" class="album-cover"/>
+      <div class="album-info">
+        <h1>{{ album.title }}</h1>
+        <p class="album-bio">简介：{{ album.description }}</p>
+        <p class="album-bio">发行日期：{{ album.releaseDate }}</p>
       </div>
     </div>
 
-    <!-- 专辑列表 -->
     <div class="album-list">
-      <h2>专辑列表</h2>
-      <div class="album-grid">
-        <div v-for="album in albums" :key="album.id" class="album-card">
-          <img :src="apiGetCoverFileUrlById(album.id)" @click="goToAlbum(album.id)" alt="专辑封面" class="album-cover"/>
-          <p class="album-title">{{ album.title }}</p>
+      <h2>歌曲列表</h2>
+      <div class="album-list">
+        <div v-for="song in songs" :key="song.id" class="album-card">
+          <p class="album-title">{{ song.title }}</p>
+          <p>{{ song.lyrics }}</p>
         </div>
       </div>
     </div>
   </div>
 
-
-
   <div class="song-list">
-  <SongList :songs="songs" @reload-songs="getSongsByArtistId(route.params.id)"/>
+    <SongList :songs="songs" @reload-songs="getSongsByAlbumId(route.params.id)"/>
   </div>
 </template>
 
 <style scoped>
-.artist-container {
+.album-container {
   position: fixed;              /* 固定定位，让它贴在视口的左边 */
   top: 100px;                       /* 从顶部开始 */
   left: 0;                      /* 靠左 */
@@ -92,7 +79,7 @@ onMounted(async () => {
 
 
 /* 歌手信息 */
-.artist-header {
+.album-header {
   display: flex;
   align-items: center;
   gap: 20px;
@@ -108,7 +95,7 @@ onMounted(async () => {
   border: 3px solid #ddd;
 }
 
-.artist-info {
+.album-info {
   flex: 1;
 }
 
@@ -118,7 +105,7 @@ h1 {
   color: #333;
 }
 
-.artist-bio {
+.album-bio {
   font-size: 16px;
   color: #666;
 }
@@ -150,6 +137,7 @@ h1 {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   transition: transform 0.2s ease-in-out;
   cursor: pointer;
+  margin: 10px;
 }
 
 .album-card:hover {
