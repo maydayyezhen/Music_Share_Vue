@@ -1,61 +1,103 @@
 <script setup>
-import {onMounted, ref} from 'vue'
-import{Artist} from "@/models/artist.js";
-import {apiGetArtistAvatarFileUrl, apiGetArtistById} from "@/api/artist-api.js";
-import {useRoute} from "vue-router";
-import {Album} from "@/models/album.js";
-import {apiGetAlbumsByArtistId, apiGetCoverFileUrlById, apiGetAlbumsByAlbumId} from "@/api/album-api.js";
-import {Song} from "@/models/song.js";
-import {apiGetSongsByArtistId, apiGetSongsByAlbumId} from "@/api/song-api.js";
-import SongList from "@/components/SongList.vue";
-const route = useRoute();
-const artist = ref({...Artist})
-const album = ref([{...Album}]);
-const songs = ref([{...Song}]);
+import { onMounted, ref } from 'vue'
+import { useRoute } from 'vue-router'
+
+import { Album } from "@/models/album.js"
+import { Song } from "@/models/song.js"
+
+import { apiGetAlbumsByAlbumId, apiGetCoverFileUrlById } from "@/api/album-api.js"
+import { apiGetSongsByAlbumId } from "@/api/song-api.js"
+
+import SongList from "@/components/SongList.vue"
+
+const route = useRoute()
+const album = ref({ ...Album })
+const songs = ref([{ ...Song }])
+const activeTab = ref('playlist') // 当前选中的 tab
 
 onMounted(async () => {
-  const albumsResponse = await apiGetAlbumsByAlbumId(route.params.id);
-  album.value = albumsResponse.data;
-  const songsResponse = await apiGetSongsByAlbumId(route.params.id);
-  songs.value = songsResponse.data;
+  const albumsResponse = await apiGetAlbumsByAlbumId(route.params.id)
+  album.value = albumsResponse.data
+
+  const songsResponse = await apiGetSongsByAlbumId(route.params.id)
+  songs.value = songsResponse.data
 })
 
+function changeTab(tab) {
+  activeTab.value = tab
+}
 </script>
+
 
 <template>
   <div class="album-container">
-    <!-- 专辑信息 -->
+    <!-- 专辑头部信息 -->
     <div class="album-header">
-      <img :src="apiGetCoverFileUrlById(album.id)" alt="专辑封面" class="album-cover"/>
+      <img :src="apiGetCoverFileUrlById(album.id)" alt="专辑封面" class="album-cover" />
       <div class="album-info">
         <h1>{{ album.title }}</h1>
-        <p class="album-bio">简介：{{ album.description }}</p>
         <p class="album-bio">发行日期：{{ album.releaseDate }}</p>
       </div>
     </div>
 
-    <div class="album-list">
-      <h2>歌曲列表</h2>
-      <div class="album-list">
-        <div v-for="song in songs" :key="song.id" class="album-card">
-          <p class="album-title">{{ song.title }}</p>
-          <p>{{ song.lyrics }}</p>
-        </div>
+    <!-- 中间导航栏 -->
+    <div class="album-nav">
+      <button :class="{ active: activeTab === 'playlist' }" @click="changeTab('playlist')">播放列表</button>
+      <button :class="{ active: activeTab === 'description' }" @click="changeTab('description')">简介</button>
+    </div>
+
+    <!-- 内容展示区 -->
+    <div class="album-content">
+      <div v-if="activeTab === 'playlist'" class="song-list">
+        <SongList :songs="songs" @reload-songs="getSongsByAlbumId(route.params.id)" />
+      </div>
+      <div v-else-if="activeTab === 'description'" class="album-description">
+        <p>{{ album.description }}</p>
       </div>
     </div>
   </div>
-
-  <div class="song-list">
-    <SongList :songs="songs" @reload-songs="getSongsByAlbumId(route.params.id)"/>
-  </div>
 </template>
 
+
 <style scoped>
+.album-nav {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin: 20px 0;
+}
+
+.album-nav button {
+  padding: 10px 20px;
+  border: none;
+  background-color: #ddd;
+  cursor: pointer;
+  font-weight: bold;
+  border-radius: 5px;
+  transition: background-color 0.2s ease;
+}
+
+.album-nav button.active {
+  background-color: #666;
+  color: #fff;
+}
+
+.album-content {
+  padding: 0 20px;
+}
+
+.album-description {
+  text-indent: 32px;
+  font-size: 16px;
+  color: #555;
+  line-height: 1.6;
+}
+
 .album-container {
   position: fixed;              /* 固定定位，让它贴在视口的左边 */
   top: 100px;                       /* 从顶部开始 */
   left: 0;                      /* 靠左 */
-  width: 60%;                   /* 左边宽度（和右边的 .song-list 匹配） */
+  width: 100%;                   /* 左边宽度（和右边的 .song-list 匹配） */
   height: 100vh;                /* 高度撑满整个视口 */
   display: flex;                /* 启用 Flex 布局 */
   flex-direction: column;       /* 垂直排列内容 */
@@ -67,14 +109,15 @@ onMounted(async () => {
 }
 
 .song-list {
-  position: fixed;              /* 固定定位，让它贴在视口的右边 */
+  /* 固定定位，让它贴在视口的右边 */
   top: 80px;                       /* 从顶部开始 */
   right: 0;                     /* 靠右 */
-  width: 40%;                   /* 右边宽度（和左边的 .artist-container 匹配） */
+  width: 100%;                   /* 右边宽度（和左边的 .artist-container 匹配） */
   height: 100vh;                /* 高度撑满整个视口 */
   display: flex;                /* 启用 Flex 布局 */
   flex-direction: column;       /* 垂直排列内容 */
-  padding: 5px;                /* 内边距 */
+  padding: 0px;                 /* 内边距 */
+  background-color: #f9f9f9;
 }
 
 
@@ -85,15 +128,10 @@ onMounted(async () => {
   gap: 20px;
   padding-bottom: 20px;
   border-bottom: 2px solid #ddd;
+  background-color: #f9f9f9;
 }
 
-.artist-avatar {
-  width: 140px;
-  height: 140px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 3px solid #ddd;
-}
+
 
 .album-info {
   flex: 1;
@@ -110,38 +148,12 @@ h1 {
   color: #666;
 }
 
-/* 专辑列表 */
-.album-list {
-  margin-top: 20px;
-}
+
 
 .album-list h2 {
   font-size: 22px;
   margin-bottom: 15px;
   color: #444;
-}
-
-/* 专辑网格布局 */
-.album-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 20px;
-}
-
-/* 单个专辑卡片 */
-.album-card {
-  background: #f9f9f9;
-  padding: 10px;
-  border-radius: 10px;
-  text-align: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s ease-in-out;
-  cursor: pointer;
-  margin: 10px;
-}
-
-.album-card:hover {
-  transform: scale(1.05);
 }
 
 /* 专辑封面 */
@@ -152,7 +164,6 @@ h1 {
   object-fit: contain; /* 保持完整，不裁剪 */
   background-color: #f0f0f0; /* 可以设置背景色填充空白 */
 }
-
 
 /* 专辑名称 */
 .album-title {
