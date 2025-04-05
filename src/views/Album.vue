@@ -5,7 +5,7 @@ import { useRoute } from 'vue-router'
 import { Album } from "@/models/album.js"
 import { Song } from "@/models/song.js"
 
-import { apiGetAlbumsByAlbumId, apiGetCoverFileUrlById } from "@/api/album-api.js"
+import { apiGetAlbumByAlbumId, apiGetCoverFileUrlById } from "@/api/album-api.js"
 import { apiGetSongsByAlbumId } from "@/api/song-api.js"
 
 import SongList from "@/components/SongList.vue"
@@ -15,12 +15,16 @@ const album = ref({ ...Album })
 const songs = ref([{ ...Song }])
 const activeTab = ref('playlist') // 当前选中的 tab
 
+const getSongsByAlbumId = async (albumId) => {
+  const songsResponse = await apiGetSongsByAlbumId(albumId)
+  songs.value = songsResponse.data
+}
+
 onMounted(async () => {
-  const albumsResponse = await apiGetAlbumsByAlbumId(route.params.id)
+  const albumsResponse = await apiGetAlbumByAlbumId(route.params.id)
   album.value = albumsResponse.data
 
-  const songsResponse = await apiGetSongsByAlbumId(route.params.id)
-  songs.value = songsResponse.data
+  await getSongsByAlbumId(route.params.id)
 })
 
 function changeTab(tab) {
@@ -30,146 +34,74 @@ function changeTab(tab) {
 
 
 <template>
-  <div class="album-container">
+  <div class="container">
     <!-- 专辑头部信息 -->
-    <div class="album-header">
-      <img :src="apiGetCoverFileUrlById(album.id)" alt="专辑封面" class="album-cover" />
-      <div class="album-info">
-        <h1>{{ album.title }}</h1>
-        <p class="album-bio">发行日期：{{ album.releaseDate }}</p>
-      </div>
-    </div>
+    <v-row align="center" class="album-header mb-4" style="max-height: 200px">
+      <v-col cols="12" md="4" class="text-center">
+        <v-img
+            :src="apiGetCoverFileUrlById(album.id)"
+            alt="专辑封面"
+            class="mx-auto rounded-lg elevation-4 album-img-border"
+            height="200"
+            width="200"
+            cover
+        ></v-img>
+
+      </v-col>
+      <v-col cols="12" md="8" class="d-flex flex-column justify-center">
+        <h1 class="text-h4 font-weight-medium mb-2">{{ album.title }}</h1>
+        <p class="text-subtitle-1 text-grey-darken-1">发行日期：{{ album.releaseDate }}</p>
+      </v-col>
+
+    </v-row>
+
+    <v-divider class ="my-6" />
 
     <!-- 中间导航栏 -->
-    <div class="album-nav">
-      <button :class="{ active: activeTab === 'playlist' }" @click="changeTab('playlist')">播放列表</button>
-      <button :class="{ active: activeTab === 'description' }" @click="changeTab('description')">简介</button>
-    </div>
+    <v-row class="album-nav" justify="center">
+      <v-btn
+          v-for="tab in ['playlist', 'description']"
+          :key="tab"
+          :class="{ 'v-btn--active': activeTab === tab }"
+          @click="changeTab(tab)"
+          class="mx-2"
+          outlined
+          :color="activeTab === tab ? 'primary' : 'default'"
+      >
+        {{ tab === 'playlist' ? '播放列表' : '简介' }}
+      </v-btn>
+    </v-row>
 
     <!-- 内容展示区 -->
-    <div class="album-content">
-      <div v-if="activeTab === 'playlist'" class="song-list">
+    <v-row class="album-content" style="min-height: 800px">
+      <v-col v-if="activeTab === 'playlist'" cols="12">
         <SongList :songs="songs" @reload-songs="getSongsByAlbumId(route.params.id)" />
-      </div>
-      <div v-else-if="activeTab === 'description'" class="album-description">
-        <p>{{ album.description }}</p>
-      </div>
-    </div>
+      </v-col>
+      <v-col v-else-if="activeTab === 'description'" cols="12">
+        <v-card class="pa-4" elevation="1" rounded="lg">
+          <p class="text-body-1 text-grey-darken-2 leading-relaxed">
+            {{ album.description }}
+          </p>
+        </v-card>
+      </v-col>
+
+    </v-row>
   </div>
 </template>
 
 
 <style scoped>
-.album-nav {
+.container {
+  position: fixed;
+  top: 80px;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
   display: flex;
-  justify-content: center;
-  gap: 20px;
-  margin: 20px 0;
+  flex-direction: column;
+  max-height: 90vh; /* 设置最大高度为视口高度 */
+  overflow-y: auto; /* 当内容超出时启用垂直滚动条 */
+  overflow-x: hidden; /* 禁止横向滚动 */
 }
 
-.album-nav button {
-  padding: 10px 20px;
-  border: none;
-  background-color: #ddd;
-  cursor: pointer;
-  font-weight: bold;
-  border-radius: 5px;
-  transition: background-color 0.2s ease;
-}
-
-.album-nav button.active {
-  background-color: #666;
-  color: #fff;
-}
-
-.album-content {
-  padding: 0 20px;
-}
-
-.album-description {
-  text-indent: 32px;
-  font-size: 16px;
-  color: #555;
-  line-height: 1.6;
-}
-
-.album-container {
-  position: fixed;              /* 固定定位，让它贴在视口的左边 */
-  top: 100px;                       /* 从顶部开始 */
-  left: 0;                      /* 靠左 */
-  width: 100%;                   /* 左边宽度（和右边的 .song-list 匹配） */
-  height: 100vh;                /* 高度撑满整个视口 */
-  display: flex;                /* 启用 Flex 布局 */
-  flex-direction: column;       /* 垂直排列内容 */
-  padding: 5px;                /* 内边距 */
-  box-sizing: border-box;       /* 包括 padding 在内计算宽高 */
-  background-color: #f9f9f9;    /* 背景色 */
-  overflow-y: auto;             /* 内容过多时出现滚动条 */
-  z-index: 1;                   /* 层级低于 .song-list */
-}
-
-.song-list {
-  /* 固定定位，让它贴在视口的右边 */
-  top: 80px;                       /* 从顶部开始 */
-  right: 0;                     /* 靠右 */
-  width: 100%;                   /* 右边宽度（和左边的 .artist-container 匹配） */
-  height: 100vh;                /* 高度撑满整个视口 */
-  display: flex;                /* 启用 Flex 布局 */
-  flex-direction: column;       /* 垂直排列内容 */
-  padding: 0px;                 /* 内边距 */
-  background-color: #f9f9f9;
-}
-
-
-/* 歌手信息 */
-.album-header {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  padding-bottom: 20px;
-  border-bottom: 2px solid #ddd;
-  background-color: #f9f9f9;
-}
-
-
-
-.album-info {
-  flex: 1;
-}
-
-h1 {
-  font-size: 26px;
-  margin-bottom: 5px;
-  color: #333;
-}
-
-.album-bio {
-  font-size: 16px;
-  color: #666;
-}
-
-
-
-.album-list h2 {
-  font-size: 22px;
-  margin-bottom: 15px;
-  color: #444;
-}
-
-/* 专辑封面 */
-.album-cover {
-  width: 160px;
-  height: 160px;
-  border-radius: 8px;
-  object-fit: contain; /* 保持完整，不裁剪 */
-  background-color: #f0f0f0; /* 可以设置背景色填充空白 */
-}
-
-/* 专辑名称 */
-.album-title {
-  margin-top: 8px;
-  font-size: 14px;
-  font-weight: bold;
-  color: #555;
-}
 </style>

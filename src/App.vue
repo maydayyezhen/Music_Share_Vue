@@ -4,10 +4,21 @@ import MusicPlayer from "@/components/MusicPlayer.vue";
 </script>
 
 <template>
-    <Layout/>
-    <router-view />
-    <MusicPlayer/>
+  <v-app>
+    <Layout />
+
+    <v-main>
+      <router-view />
+    </v-main>
+
+    <v-footer
+        app
+    >
+      <MusicPlayer />
+    </v-footer>
+  </v-app>
 </template>
+
 
 <style scoped>
 header {

@@ -1,12 +1,13 @@
 <script setup>
-import { ref } from 'vue'
+import {ref} from 'vue'
 import router from "@/router/index.js";
 import { useAuthStore } from '@/stores/authStore';
 import {apiCreateUser, apiGetUserByUsername} from "@/api/user-api.js";
 import {User} from "@/models/user.js";
 
 const authStore = useAuthStore();
-const emit = defineEmits(['close']);
+
+const visible = defineModel('visible')
 
 const username = ref('');
 const password = ref('');
@@ -30,7 +31,7 @@ const register = async () => {
       if( response.status === 200){
         alert('注册成功');
       }
-      registered.value = false;
+      setRegister();
     }
 
 }
@@ -44,7 +45,9 @@ const login = async () => {
       alert('登录成功');
       authStore.login();
       authStore.saveUser(user);
-      emit('close');
+      username.value ='';
+      password.value = '';
+      visible.value = false;
       await router.push(`/${user.role}`);
     } else {
       alert('密码错误');
@@ -56,99 +59,61 @@ const login = async () => {
 </script>
 
 <template>
-  <div class="modal-content">
-    <div v-if="!registered" class="login">
-      <h2>登录</h2>
-      <input type="text" placeholder="请输入账号" v-model="username" />
-      <input type="password" placeholder="请输入密码" v-model="password" />
-      <div class="login-actions">
-        <!-- 登录按钮 -->
-        <button @click="login();">登录</button>
-        <!-- 取消按钮，点击关闭弹窗 -->
-        <button @click="$emit('close')">取消</button>
-        <h3 @click="setRegister" :class="{'active': registered}">注册</h3>
+  <v-dialog v-model="visible" max-width="400">
+    <v-card class="pa-6">
+      <div v-if="!registered">
+        <v-card-title class="text-h5 text-center">登录</v-card-title>
+
+        <v-card-text>
+          <v-text-field
+              label="账号"
+              v-model="username"
+              prepend-icon="mdi-account"
+          ></v-text-field>
+          <v-text-field
+              label="密码"
+              v-model="password"
+              type="password"
+              prepend-icon="mdi-lock"
+          ></v-text-field>
+        </v-card-text>
+
+        <v-card-actions class="d-flex justify-space-between">
+          <v-btn color="primary" @click="login">登录</v-btn>
+          <v-btn color="grey" @click="visible = false">取消</v-btn>
+        </v-card-actions>
+
+        <div class="text-center mt-4">
+          <v-btn text @click="setRegister">还没有账号？点击注册</v-btn>
+        </div>
       </div>
-    </div>
-    <div v-else class="register">
-      <h3>注册</h3>
-      <input type="text" placeholder="请输入账号" v-model="username" />
-      <input type="password" placeholder="请输入密码" v-model="password" />
-      <div class="register-actions">
-        <button @click="register">确认</button>
-        <button @click="setRegister">取消</button>
+
+      <div v-else>
+        <v-card-title class="text-h5 text-center">注册</v-card-title>
+
+        <v-card-text>
+          <v-text-field
+              label="账号"
+              v-model="username"
+              prepend-icon="mdi-account"
+          ></v-text-field>
+          <v-text-field
+              label="密码"
+              v-model="password"
+              type="password"
+              prepend-icon="mdi-lock"
+          ></v-text-field>
+        </v-card-text>
+
+        <v-card-actions class="d-flex justify-space-between">
+          <v-btn color="success" @click="register">确认</v-btn>
+          <v-btn color="grey" @click="setRegister">取消</v-btn>
+        </v-card-actions>
       </div>
-    </div>
-  </div>
+    </v-card>
+  </v-dialog>
 </template>
 
 <style scoped>
 
-/* 默认状态 */
-h2 {
-  display: inline-block;
-  padding: 5px 10px;
-  margin: 5px;
-  cursor: pointer;
-  border-radius: 5px;
-  transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-.login {
-  justify-content: center;
-}
-
-.login h3{
-  color: cornflowerblue;
-  cursor: pointer;
-}
-
-.login h3:hover {
-  color: #a86666;
-}
-
-
-.modal-content {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  width: 400px; /* 设定固定宽度 */
-  height: 300px; /* 设定固定高度 */
-  background: #f5f5f5;
-  padding: 20px;
-  border-radius: 10px;
-  text-align: center;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* 让模态框有点立体感 */
-  display: flex;
-  flex-direction: column;
-  justify-content: center; /* 垂直居中 */
-  align-items: center; /* 水平居中 */
-  transform: translate(-50%, -50%); /* 让模态框真正居中 */
-  z-index: 2000; /* 使模态框位于前端 */
-}
-
-
-input {
-  display: block;
-  width: 100%;
-  margin: 10px 0;
-  padding: 8px;
-}
-
-.login-actions {
-  width: 250px;
-  display: flex;
-  justify-content: center;
-  align-items: flex-end;
-  position: relative;
-}
-.login-actions >:last-child {
-  position: absolute;
-  right: 0;
-}
-
-button {
-  margin: 5px;
-  padding: 8px 16px;
-  cursor: pointer;
-}
 </style>

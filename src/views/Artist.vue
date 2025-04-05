@@ -14,8 +14,8 @@ const artist = ref({...Artist})
 const albums = ref([{...Album}]);
 const songs = ref([{...Song}]);
 
-const getSongsByArtistId = async () => {
-  const response = await apiGetSongsByArtistId(route.params.id);
+const getSongsByArtistId = async (artistId) => {
+  const response = await apiGetSongsByArtistId(artistId);
   songs.value = response.data;
 }
 
@@ -34,143 +34,85 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="artist-container">
-    <!-- 歌手信息 -->
-    <div class="artist-header">
-      <img :src="apiGetArtistAvatarFileUrl(artist.id)" alt="Artist Image" class="artist-avatar"/>
-      <div class="artist-info">
-        <h1>{{ artist.name }}</h1>
-        <p class="artist-bio">{{ artist.bio }}</p>
-      </div>
-    </div>
+  <div class="container">
+      <!-- 歌手信息卡片 -->
+        <v-row align="center">
+          <v-col cols="12" md="4" class="text-center">
+            <v-img
+                :src="apiGetArtistAvatarFileUrl(artist.id)"
+                alt="Artist Image"
+                width="150"
+                height="150"
+                cover
+                rounded="circle"
+                class="mx-auto"
+            ></v-img>
+          </v-col>
+          <v-col cols="12" md="8">
+            <h2 class="text-h4 font-weight-medium mb-2">{{ artist.name }}</h2>
+            <p class="text-subtitle-1 text-grey-darken-1">{{ artist.bio }}</p>
+          </v-col>
+        </v-row>
 
-    <!-- 专辑列表 -->
-    <div class="album-list">
-      <h2>专辑列表</h2>
-      <div class="album-grid">
-        <div v-for="album in albums" :key="album.id" class="album-card">
-          <img :src="apiGetCoverFileUrlById(album.id)" @click="goToAlbum(album.id)" alt="专辑封面" class="album-cover"/>
-          <p class="album-title">{{ album.title }}</p>
-        </div>
-      </div>
-    </div>
-  </div>
+        <v-divider class="my-6"></v-divider>
 
+      <!-- 专辑列表卡片 -->
+        <h3 class="text-h5 font-weight-medium mb-4">🎵 专辑列表</h3>
+        <v-row dense class="album-grid">
+          <v-col
+            v-for="album in albums"
+            :key="album.id"
+            class="d-flex"
+            cols="12"
+            sm="2"
+            md="2"
+            lg="1"
+          >
+            <v-card
+                @click="goToAlbum(album.id)"
+                class="pa-2 flex-grow-1 hoverable"
+                elevation="1"
+                rounded="lg"
+            >
+            <v-img
+                :src="apiGetCoverFileUrlById(album.id)"
+                alt="专辑封面"
+                height="100px"
+                width="100px"
+                cover
+                class="mb-2 rounded d-flex flex-column align-center justify-center"
 
+            ></v-img>
+            <v-card-title class="text-center text-subtitle-2 font-weight-medium">
+              {{ album.title }}
+            </v-card-title>
+            </v-card>
+          </v-col>
 
-  <div class="song-list">
-  <SongList :songs="songs" @reload-songs="getSongsByArtistId(route.params.id)"/>
+        </v-row>
+    <v-divider class="my-8"></v-divider>
+      <h3 class="text-h5 font-weight-medium mb-4">🎶 歌曲列表</h3>
+      <SongList
+          :songs="songs"
+          @reload-songs="getSongsByArtistId(route.params.id)"
+      />
   </div>
 </template>
 
+
+
+
 <style scoped>
-.artist-container {
-  position: fixed;              /* 固定定位，让它贴在视口的左边 */
-  top: 100px;                       /* 从顶部开始 */
-  left: 0;                      /* 靠左 */
-  width: 60%;                   /* 左边宽度（和右边的 .song-list 匹配） */
-  height: 100vh;                /* 高度撑满整个视口 */
-  display: flex;                /* 启用 Flex 布局 */
-  flex-direction: column;       /* 垂直排列内容 */
-  padding: 5px;                /* 内边距 */
-  box-sizing: border-box;       /* 包括 padding 在内计算宽高 */
-  background-color: #f9f9f9;    /* 背景色 */
-  overflow-y: auto;             /* 内容过多时出现滚动条 */
-  z-index: 1;                   /* 层级低于 .song-list */
-}
-
-.song-list {
-  position: fixed;              /* 固定定位，让它贴在视口的右边 */
-  top: 80px;                       /* 从顶部开始 */
-  right: 0;                     /* 靠右 */
-  width: 40%;                   /* 右边宽度（和左边的 .artist-container 匹配） */
-  height: 100vh;                /* 高度撑满整个视口 */
-  display: flex;                /* 启用 Flex 布局 */
-  flex-direction: column;       /* 垂直排列内容 */
-  padding: 5px;                /* 内边距 */
-}
-
-
-/* 歌手信息 */
-.artist-header {
+.container {
+  position: fixed;
+  top: 80px;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
   display: flex;
-  align-items: center;
-  gap: 20px;
-  padding-bottom: 20px;
-  border-bottom: 2px solid #ddd;
-}
-
-.artist-avatar {
-  width: 140px;
-  height: 140px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 3px solid #ddd;
-}
-
-.artist-info {
-  flex: 1;
-}
-
-h1 {
-  font-size: 26px;
-  margin-bottom: 5px;
-  color: #333;
-}
-
-.artist-bio {
-  font-size: 16px;
-  color: #666;
-}
-
-/* 专辑列表 */
-.album-list {
-  margin-top: 20px;
-}
-
-.album-list h2 {
-  font-size: 22px;
-  margin-bottom: 15px;
-  color: #444;
-}
-
-/* 专辑网格布局 */
-.album-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 20px;
-}
-
-/* 单个专辑卡片 */
-.album-card {
-  background: #f9f9f9;
-  padding: 10px;
-  border-radius: 10px;
-  text-align: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s ease-in-out;
-  cursor: pointer;
-}
-
-.album-card:hover {
-  transform: scale(1.05);
-}
-
-/* 专辑封面 */
-.album-cover {
-  width: 160px;
-  height: 160px;
-  border-radius: 8px;
-  object-fit: contain; /* 保持完整，不裁剪 */
-  background-color: #f0f0f0; /* 可以设置背景色填充空白 */
-}
-
-
-/* 专辑名称 */
-.album-title {
-  margin-top: 8px;
-  font-size: 14px;
-  font-weight: bold;
-  color: #555;
+  flex-direction: column;
+  max-height: 90vh; /* 设置最大高度为视口高度 */
+  overflow-y: auto; /* 当内容超出时启用垂直滚动条 */
+  overflow-x: hidden; /* 禁止横向滚动 */
 }
 </style>

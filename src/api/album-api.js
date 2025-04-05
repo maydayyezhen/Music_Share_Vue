@@ -11,7 +11,7 @@ export const apiGetAlbumsByArtistId = (id) => {
     return axios.get(`${API_BASE_URL}/albums/artist/${id}`);
 }
 //根据专辑id获取专辑
-export const apiGetAlbumsByAlbumId = (id) => {
+export const apiGetAlbumByAlbumId = (id) => {
     return axios.get(`${API_BASE_URL}/albums/${id}`);
 }
 
