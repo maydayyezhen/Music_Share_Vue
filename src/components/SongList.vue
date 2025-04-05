@@ -2,7 +2,7 @@
 import {ref, watch} from "vue";
 import {useMusicStore} from "@/stores/musicStore.js";
 import {
-  apiDeleteAudioFileBySongId,
+  apiDeleteAudioFileBySongId, apiDeleteLrcFileBySongId,
   apiDeleteSongById,
   apiGetCoverFileUrlBySongId,
   apiUpdateSong
@@ -30,6 +30,7 @@ const updateSong = async () => {
 
 const deleteSong = async (song) => {
   await apiDeleteAudioFileBySongId(song.id);
+  await apiDeleteLrcFileBySongId(song.id);
   await apiDeleteSongById(song.id);
   emit("reloadSongs");
 }
@@ -146,7 +147,7 @@ const goToAlbum = (albumId) => {
     </v-row>
 
     <!-- 添加歌曲弹窗 -->
-    <AddMusic v-model:visible="songModalVisible" />
+    <AddMusic v-if="songModalVisible" v-model:visible="songModalVisible" />
   </v-container>
 </template>
 

@@ -19,9 +19,11 @@ const selectItem = (item) => {
 
 </script>
 <template>
-  <v-app-bar app color="deep-purple accent-4" dark>
-    <!-- 网站标题 -->
-    <v-toolbar-title style="font-family: 'Lobster', cursive">Music Share</v-toolbar-title>
+  <v-app-bar app color="#ADD8E6" elevation="0" flat>
+    <v-toolbar-title style="font-family: 'Lobster', cursive; color: #FFFFFF">
+      Music Share
+    </v-toolbar-title>
+
 
     <!-- 右侧导航项 -->
     <v-spacer />

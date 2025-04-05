@@ -1,6 +1,8 @@
 <script setup>
 import Layout from "@/components/Layout.vue";
 import MusicPlayer from "@/components/MusicPlayer.vue";
+import {useMusicStore} from "@/stores/musicStore.js";
+const musicStore = useMusicStore();
 </script>
 
 <template>
@@ -14,7 +16,7 @@ import MusicPlayer from "@/components/MusicPlayer.vue";
     <v-footer
         app
     >
-      <MusicPlayer />
+      <MusicPlayer v-if="musicStore.currentSong.id"/>
     </v-footer>
   </v-app>
 </template>

@@ -29,6 +29,16 @@ export const apiUploadAudioFile = (audioFile) => {
     });
 }
 
+//上传歌词文件
+export const apiUploadLrcFile = (lrcFile) => {
+    const formData = new FormData();
+    formData.append('lrcFile', lrcFile);
+    return axios.post(`${API_BASE_URL}/songs/lrcFile`, formData,{
+        headers: { 'Content-Type': 'multipart/form-data' }
+    });
+}
+
+
 
 //PUT
 //更新歌曲
@@ -46,6 +56,12 @@ export const apiDeleteSongById = (id) => {
 export const apiDeleteAudioFileBySongId = (id) => {
     return axios.delete(`${API_BASE_URL}/songs/${id}/audioFile`);
 }
+//删除歌词文件
+export const apiDeleteLrcFileBySongId = (id) => {
+    return axios.delete(`${API_BASE_URL}/songs/${id}/lrcFile`);
+}
+
+
 
 
 //文件操作
@@ -53,6 +69,12 @@ export const apiDeleteAudioFileBySongId = (id) => {
 export const apiGetAudioFileUrlById = (id) => {
     return `${API_BASE_URL}/songs/${id}/audioFile`;
 }
+
+//获取歌词URL
+export const apiGetLrcFileUrlById = (id) => {
+    return `${API_BASE_URL}/songs/${id}/lrcFile`;
+}
+
 //通过歌曲ID获取封面URL
 export const apiGetCoverFileUrlBySongId = (id) => {
     return `${API_BASE_URL}/songs/${id}/coverFile`;

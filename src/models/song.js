@@ -11,5 +11,6 @@ export const Song = {
     },
     duration: null,
     audioFilename: "",
+    lrcFilename: "",
     lyrics: ""
 };

@@ -4,7 +4,7 @@ import ArtistModal from "@/components/ArtistModal.vue";
 import AlbumModal from "@/components/AlbumModal.vue";
 import {apiGetAlbumsByArtistId, apiGetAllAlbums, apiGetCoverFileUrlById} from "@/api/album-api.js";
 import {apiGetAllArtists, apiGetArtistAvatarFileUrl} from "@/api/artist-api.js";
-import {apiCreateSong, apiUploadAudioFile} from "@/api/song-api.js";
+import {apiCreateSong, apiUploadAudioFile, apiUploadLrcFile} from "@/api/song-api.js";
 import {Artist} from "@/models/artist.js";
 import {Album} from "@/models/album.js";
 import {Song} from "@/models/song.js";
@@ -54,6 +54,7 @@ const handelArtistCreated = async (newArtist) => {
 }
 
 const selectedAudioFile = ref(null);
+const selectedLrcFile = ref(null);
 const formattedDuration = ref(null);
 const duration = ref();
 const audio = new Audio();
@@ -75,9 +76,22 @@ const selectAudioFile = (event) => {
   };
 };
 
+const selectLrcFile = (event) => {
+  const file = event.target.files[0];
+  if (file) {
+    selectedLrcFile.value = file;
+    console.log("📂 选中文件:", file.name);
+  } else {
+    console.warn("⚠ 没有选中文件");
+  }
+}
+
 const upload = async () => {
-  const response = await apiUploadAudioFile(selectedAudioFile.value);
-  newSong.value.audioFilename = response.data;
+  const audioResponse = await apiUploadAudioFile(selectedAudioFile.value);
+  const lrcResponse = await apiUploadLrcFile(selectedLrcFile.value);
+
+  newSong.value.audioFilename = audioResponse.data;
+  newSong.value.lrcFilename = lrcResponse.data;
   newSong.value.artist.id = selectedArtist.value.id;
   newSong.value.album.id = selectedAlbum.value.id;
   newSong.value.duration = duration.value;
@@ -171,6 +185,15 @@ const visible = defineModel('visible')
             @change="selectAudioFile"
             outlined
         />
+
+        <v-file-input
+            id="lyrics-file-input"
+            label="选择歌词文件"
+            accept=".lrc,.txt"
+            @change="selectLrcFile"
+            outlined
+        />
+
 
         <v-textarea
             v-model="newSong.lyrics"
