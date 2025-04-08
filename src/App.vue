@@ -7,19 +7,24 @@ const musicStore = useMusicStore();
 
 <template>
   <v-app>
+
     <Layout />
+
 
     <v-main>
       <router-view />
     </v-main>
 
-    <v-footer
-        app
-    >
-      <MusicPlayer v-if="musicStore.currentSong.id"/>
+
+    <v-footer app style="background-color: transparent">
+      <MusicPlayer @next-song="musicStore.nextSong" />
     </v-footer>
+
+
+
   </v-app>
 </template>
+
 
 
 <style scoped>

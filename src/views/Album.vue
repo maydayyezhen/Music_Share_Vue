@@ -92,16 +92,9 @@ function changeTab(tab) {
 
 <style scoped>
 .container {
-  position: fixed;
-  top: 80px;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
+  width: 70vw;
   display: flex;
   flex-direction: column;
-  max-height: 90vh; /* 设置最大高度为视口高度 */
-  overflow-y: auto; /* 当内容超出时启用垂直滚动条 */
-  overflow-x: hidden; /* 禁止横向滚动 */
 }
 
 </style>

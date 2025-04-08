@@ -35,8 +35,9 @@ const deleteSong = async (song) => {
   emit("reloadSongs");
 }
 
-const playSong = (song) => {
-  currentMusic.setCurrentSong(song);
+const playSong = (currentSong) => {
+  currentMusic.setCurrentPlayList(props.songs);
+  currentMusic.setCurrentSong(props.songs.findIndex(song => song.id === currentSong.id));
 };
 
 watch(songModalVisible, (newVal, oldVal) => {
@@ -139,7 +140,7 @@ const goToAlbum = (albumId) => {
               <v-text-field v-model="editingSong.duration" label="时长" dense></v-text-field>
             </v-col>
             <v-col>
-              <v-btn @click="updateSong()" color="primary" block>保存</v-btn>
+              <v-btn @click="updateSong" color="primary" block>保存</v-btn>
             </v-col>
           </v-row>
         </v-card>

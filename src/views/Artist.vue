@@ -36,7 +36,7 @@ onMounted(async () => {
 <template>
   <div class="container">
       <!-- 歌手信息卡片 -->
-        <v-row align="center">
+        <v-row align="center" justify-center>
           <v-col cols="12" md="4" class="text-center">
             <v-img
                 :src="apiGetArtistAvatarFileUrl(artist.id)"
@@ -58,38 +58,39 @@ onMounted(async () => {
 
       <!-- 专辑列表卡片 -->
         <h3 class="text-h5 font-weight-medium mb-4">🎵 专辑列表</h3>
-        <v-row dense class="album-grid">
-          <v-col
-            v-for="album in albums"
-            :key="album.id"
-            class="d-flex"
-            cols="12"
-            sm="2"
-            md="2"
-            lg="1"
-          >
-            <v-card
-                @click="goToAlbum(album.id)"
-                class="pa-2 flex-grow-1 hoverable"
-                elevation="1"
-                rounded="lg"
-            >
-            <v-img
-                :src="apiGetCoverFileUrlById(album.id)"
-                alt="专辑封面"
-                height="100px"
-                width="100px"
-                cover
-                class="mb-2 rounded d-flex flex-column align-center justify-center"
+    <v-row dense class="album-grid">
+      <v-col
+          v-for="album in albums"
+          :key="album.id"
+          cols="12"
+          sm="4"
+          md="3"
+          lg="2"
+          class="d-flex justify-center"
+      >
+        <v-card
+            @click="goToAlbum(album.id)"
+            class="pa-2 hoverable text-center"
+            elevation="2"
+            rounded="lg"
+            max-width="160"
+        >
+          <v-img
+              :src="apiGetCoverFileUrlById(album.id)"
+              alt="专辑封面"
+              height="120px"
+              width="120px"
+              cover
+              class="mb-2 mx-auto rounded"
+          ></v-img>
 
-            ></v-img>
-            <v-card-title class="text-center text-subtitle-2 font-weight-medium">
-              {{ album.title }}
-            </v-card-title>
-            </v-card>
-          </v-col>
+          <v-card-title class="text-subtitle-2 font-weight-medium">
+            {{ album.title }}
+          </v-card-title>
+        </v-card>
+      </v-col>
+    </v-row>
 
-        </v-row>
     <v-divider class="my-8"></v-divider>
       <h3 class="text-h5 font-weight-medium mb-4">🎶 歌曲列表</h3>
       <SongList
@@ -104,15 +105,8 @@ onMounted(async () => {
 
 <style scoped>
 .container {
-  position: fixed;
-  top: 80px;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
+  width: 80vw;
   display: flex;
   flex-direction: column;
-  max-height: 90vh; /* 设置最大高度为视口高度 */
-  overflow-y: auto; /* 当内容超出时启用垂直滚动条 */
-  overflow-x: hidden; /* 禁止横向滚动 */
 }
 </style>
