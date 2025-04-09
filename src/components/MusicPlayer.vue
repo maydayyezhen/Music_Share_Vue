@@ -43,6 +43,7 @@ const parseLRC = (lrcText) => {
 }
 
 const loadLRC = async () => {
+  if (!currentMusic.currentSong.id) return;
   const res = await fetch(apiGetLrcFileUrlById(currentMusic.currentSong.id));
   const text = await res.text()
   lyrics.value = parseLRC(text)
@@ -71,11 +72,11 @@ const previousSong = () => {
 
 onMounted(() => {
   loadLRC()
+  if(currentMusic.currentSong.id)
   audioRef.value.src = apiGetAudioFileUrlById(currentMusic.currentSong.id);
-  if (audioRef.value) {
+  if (audioRef.value.src) {
     audioRef.value.addEventListener('ended', nextSong)
   }
-  audioRef.value.play();
 })
 
 watch(() => currentMusic.currentSong.id, (newId) => {
@@ -83,6 +84,11 @@ watch(() => currentMusic.currentSong.id, (newId) => {
     loadLRC()
     audioRef.value.src = apiGetAudioFileUrlById(newId)
     audioRef.value.play();
+  }
+  else {
+    audioRef.value.pause()
+    audioRef.value.src = ''
+    lyrics.value = [];
   }
 })
 </script>
@@ -117,11 +123,43 @@ watch(() => currentMusic.currentSong.id, (newId) => {
 
     <!-- 播放器底部控制条 -->
     <v-row align="center" class="mt-4">
-      <v-col cols="12" md="8">
+      <v-col cols="12" md="8" class="d-flex align-center justify-between">
         <!-- 展开/折叠按钮 -->
         <v-btn icon variant="text" @click="showSheetChange">
           <span class="material-symbols-outlined">more_up</span>
         </v-btn>
+
+        <!-- 右上角菜单按钮 -->
+        <v-menu location="top">
+          <template #activator="{ props }">
+            <v-btn color="primary" v-bind="props">
+              播放列表
+            </v-btn>
+          </template>
+          <v-list>
+            <v-list-item
+                v-for="thisSong in currentMusic.currentPlaylist"
+                :key="thisSong.id"
+                @click="currentMusic.setCurrentSong(currentMusic.currentPlaylist.findIndex(song => song.id === thisSong.id))"
+            >
+              <v-list-item-title
+                  :class="{
+                  'text-primary': thisSong.id === currentMusic.currentSong.id,
+                  'font-weight-bold': thisSong.id === currentMusic.currentSong.id,
+                  'font-weight-normal': thisSong.id !== currentMusic.currentSong.id
+                }"
+              >
+                {{ thisSong.title }} - {{ thisSong.artist.name }}
+              </v-list-item-title>
+
+              <template #append>
+                <v-btn icon variant="text" @click="currentMusic.deleteSongFromPlaylist(currentMusic.currentPlaylist.findIndex(song => song.id === thisSong.id))">
+                  <span class="material-symbols-outlined">close</span>
+                </v-btn>
+              </template>
+            </v-list-item>
+          </v-list>
+        </v-menu>
 
         <!-- 上一首 -->
         <v-btn icon variant="text" @click="previousSong">
@@ -164,20 +202,57 @@ watch(() => currentMusic.currentSong.id, (newId) => {
 
 
 
-
 <style scoped>
 .lyrics-container {
   background: #222;
   border-radius: 8px;
+  overflow-y: auto;
+  scrollbar-width: thin;
 }
+
 .line {
-  color: #eee;
+  color: #ccc;
   font-size: 14px;
   transition: all 0.3s;
+  white-space: pre-wrap;
 }
+
 .active {
   color: #00ffd5;
   font-weight: bold;
   font-size: 18px;
+  background-color: rgba(0, 255, 213, 0.1);
+  border-left: 4px solid #00ffd5;
+  padding-left: 8px;
 }
+
+.mini-player {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #ffffff;
+  color: #333;
+  border-radius: 24px;
+  width: auto;
+  max-width: 90%;
+  min-width: 280px;
+}
+
+.expand-icon {
+  margin-left: 12px;
+}
+
+v-list-item-title {
+  font-size: 14px;
+}
+
+v-list-item {
+  border-bottom: 1px solid #eee;
+}
+
+v-btn {
+  text-transform: none;
+}
+
 </style>

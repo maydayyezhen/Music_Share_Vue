@@ -18,22 +18,10 @@ onMounted(getAllSongs);
 </script>
 
 <template>
-  <div class="container">
+  <v-container class="container">
     <SongList :songs="songs" @reload-songs="getAllSongs" />
-  </div>
+  </v-container>
 </template>
 
 <style scoped>
-.container {
-  position: fixed;
-  top: 80px;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  max-height: 90vh; /* 设置最大高度为视口高度 */
-  overflow-y: auto; /* 当内容超出时启用垂直滚动条 */
-  overflow-x: hidden; /* 禁止横向滚动 */
-}
 </style>

@@ -44,5 +44,7 @@ export const apiDeleteCoverFileById = (id) => {
 
 //获取封面URL
 export const apiGetCoverFileUrlById = (id) => {
+    if(id===null)
+        return '';
     return `${API_BASE_URL}/albums/${id}/coverFile`;
 }

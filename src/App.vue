@@ -7,37 +7,21 @@ const musicStore = useMusicStore();
 
 <template>
   <v-app>
-
     <Layout />
-
-
     <v-main>
-      <router-view />
+      <v-container fluid>
+        <router-view /> <!-- 主要内容 -->
+      </v-container>
     </v-main>
-
-
-    <v-footer app style="background-color: transparent">
+    <v-footer app>
       <MusicPlayer @next-song="musicStore.nextSong" />
     </v-footer>
-
-
-
   </v-app>
 </template>
 
 
 
+
+
 <style scoped>
-header {
-  line-height: 1.5;
-}
-
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
-
-}
 </style>

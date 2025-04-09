@@ -6,9 +6,6 @@ import router from "@/router/index.js";
 const authStore = useAuthStore();
 const dialogVisible = ref(false)
 const isOpen = ref(false);
-const toggleMenu = () => {
-  isOpen.value = !isOpen.value;
-}
 
 const selectItem = (item) => {
   console.log('选择了:', item);
@@ -18,48 +15,52 @@ const selectItem = (item) => {
 };
 
 </script>
+
 <template>
-  <v-app-bar app color="#ADD8E6" elevation="0" flat>
-    <v-toolbar-title style="font-family: 'Lobster', cursive; color: #FFFFFF">
+  <v-app-bar app flat height="64" color="#ADD8E6">
+    <!-- LOGO / 标题 -->
+    <v-toolbar-title class="title-font text-white">
       Music Share
     </v-toolbar-title>
 
-
-    <!-- 右侧导航项 -->
+    <!-- Spacer 推右对齐 -->
     <v-spacer />
 
-    <!-- 登录后显示的导航链接 -->
+    <!-- 登录后的导航 -->
     <template v-if="authStore.isLoggedIn">
       <v-btn
-          text
+          variant="text"
+          class="nav-btn"
+          :class="{ active: authStore.section === 'music_db' }"
           @click="authStore.setSection('music_db')"
-          :class="{'text--white': authStore.section === 'music_db'}"
       >
         音乐库
       </v-btn>
 
       <v-btn
           v-if="authStore.user.role === 'user'"
-          text
+          variant="text"
+          class="nav-btn"
+          :class="{ active: authStore.section === 'my_music' }"
           @click="authStore.setSection('my_music')"
-          :class="{'text--white': authStore.section === 'my_music'}"
       >
         我的音乐
       </v-btn>
 
       <v-btn
           v-if="authStore.user.role === 'admin'"
-          text
+          variant="text"
+          class="nav-btn"
+          :class="{ active: authStore.section === 'user_manage' }"
           @click="authStore.setSection('user_manage')"
-          :class="{'text--white': authStore.section === 'user_manage'}"
       >
         用户管理
       </v-btn>
 
-      <!-- 右上角菜单按钮 -->
+      <!-- 菜单按钮 -->
       <v-menu v-model="isOpen" offset-y>
         <template #activator="{ props }">
-          <v-btn v-bind="props" text>菜单</v-btn>
+          <v-btn v-bind="props" variant="text" class="nav-btn">菜单</v-btn>
         </template>
         <v-list>
           <v-list-item @click="selectItem('我的信息')">
@@ -75,8 +76,8 @@ const selectItem = (item) => {
       </v-menu>
     </template>
 
-    <!-- 未登录时显示登录按钮 -->
-    <v-btn v-else color="primary" @click="dialogVisible = true">登录</v-btn>
+    <!-- 未登录 -->
+    <v-btn v-else color="secondary" @click="dialogVisible = true">登录</v-btn>
   </v-app-bar>
 
   <!-- 登录弹窗 -->
@@ -84,4 +85,19 @@ const selectItem = (item) => {
 </template>
 
 <style scoped>
+.title-font {
+  font-family: 'Lobster', cursive;
+  font-size: 24px;
+}
+
+.nav-btn {
+  color: white;
+  text-transform: none;
+  font-weight: 500;
+}
+
+.nav-btn.active {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+}
 </style>

@@ -77,6 +77,8 @@ export const apiGetLrcFileUrlById = (id) => {
 
 //通过歌曲ID获取封面URL
 export const apiGetCoverFileUrlBySongId = (id) => {
+    if(id===null)
+        return '';
     return `${API_BASE_URL}/songs/${id}/coverFile`;
 }
 

@@ -41,5 +41,7 @@ export const apiDeleteAvatarFile = (path) => {
 
 //获取歌手头像URL
 export  const apiGetArtistAvatarFileUrl = (id) => {
+    if(id===null)
+        return '';
     return `${API_BASE_URL}/artists/${id}/avatarFile`;
 }
