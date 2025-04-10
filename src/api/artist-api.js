@@ -1,4 +1,5 @@
 import axios from 'axios';
+import {apiGetFileUrl} from "@/api/file-api.js";
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 
@@ -41,7 +42,5 @@ export const apiDeleteAvatarFile = (path) => {
 
 //获取歌手头像URL
 export  const apiGetArtistAvatarFileUrl = (fileUrl) => {
-    if(fileUrl==="")
-        return '';
-    return `${API_BASE_URL}/${fileUrl}`;
+    return apiGetFileUrl(fileUrl);
 }

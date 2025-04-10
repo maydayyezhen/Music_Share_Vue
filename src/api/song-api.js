@@ -1,4 +1,5 @@
 import axios from 'axios';
+import {apiGetFileUrl} from "@/api/file-api.js";
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 //GET
@@ -66,13 +67,13 @@ export const apiDeleteLrcFileBySongId = (id) => {
 
 //文件操作
 //获取音频URL
-export const apiGetAudioFileUrlById = (fileUrl) => {
-    return `${API_BASE_URL}/${fileUrl}`;
+export const apiGetAudioFileUrl = (fileUrl) => {
+    return apiGetFileUrl(fileUrl);
 }
 
 //获取歌词URL
-export const apiGetLrcFileUrlById = (fileUrl) => {
-    return `${API_BASE_URL}/${fileUrl}`;
+export const apiGetLyricFileUrl = (fileUrl) => {
+    return apiGetFileUrl(fileUrl);
 }
 
 //通过歌曲ID获取封面URL

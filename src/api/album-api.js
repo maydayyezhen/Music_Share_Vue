@@ -1,4 +1,5 @@
 import axios from 'axios';
+import {apiGetFileUrl} from "@/api/file-api.js";
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 //GET
@@ -49,8 +50,6 @@ export const apiDeleteCoverFileById = (id) => {
 }
 
 //获取封面URL
-export const apiGetCoverFileUrlById = (fileUrl) => {
-    if(fileUrl==="")
-        return '';
-    return `${API_BASE_URL}/${fileUrl}`;
+export const apiGetCoverFileUrl = (fileUrl) => {
+    return apiGetFileUrl(fileUrl);
 }

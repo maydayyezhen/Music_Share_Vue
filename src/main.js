@@ -10,6 +10,9 @@ import * as directives from 'vuetify/directives'
 const vuetify = createVuetify({
     components,
     directives,
+    theme: {
+        dark: true,
+    }
 })
 
 const app = createApp(App)
@@ -17,3 +20,4 @@ app.use(createPinia()) // 注册 Pinia
 app.use(vuetify)
 app.use(router)
 app.mount('#app')
+

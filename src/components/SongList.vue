@@ -1,5 +1,5 @@
 <script setup>
-import {ref, watch} from "vue";
+import {computed, ref, watch} from "vue";
 import {useMusicStore} from "@/stores/musicStore.js";
 import {
   apiDeleteAudioFileBySongId,
@@ -36,9 +36,19 @@ const deleteSong = async (song) => {
   emit("reloadSongs");
 }
 
-const playSong = (currentSong) => {
-  currentMusic.setCurrentPlayList(props.songs);
-  currentMusic.setCurrentSong(props.songs.findIndex(song => song.id === currentSong.id));
+const togglePlayPause = (currentSong) => {
+  if(currentMusic.currentSong.id === currentSong.id) {
+    if(currentMusic.isPlaying) {
+      currentMusic.pause();
+    }
+    else {
+      currentMusic.play();
+    }
+  }
+  else {
+    currentMusic.setCurrentPlayList(props.songs);
+    currentMusic.setCurrentSong(props.songs.findIndex(song => song.id === currentSong.id));
+  }
 };
 
 watch(songModalVisible, (newVal, oldVal) => {
@@ -70,6 +80,18 @@ watch(
     { immediate: true } // 初始就触发一次
 );
 
+const searchQuery = ref("");
+const items = computed(() => props.songs);
+
+const filteredItems = computed(() =>
+    items.value.filter(item =>
+        String(item.title).toLowerCase().includes(searchQuery.value.toLowerCase())||
+        String(item.artist.name).toLowerCase().includes(searchQuery.value.toLowerCase())||
+        String(item.album.title).toLowerCase().includes(searchQuery.value.toLowerCase())
+    )
+)
+
+
 
 </script>
 
@@ -90,8 +112,15 @@ watch(
       </v-col>
     </v-row>
 
+    <v-text-field
+        v-model="searchQuery"
+        label="搜索"
+        prepend-inner-icon="mdi-magnify"
+        variant="outlined"
+        clearable
+    />
     <!-- 歌曲列表 -->
-    <v-row v-for="song in props.songs" :key="song.id" class="mb-3">
+    <v-row v-for="song in filteredItems" :key="song.id" class="mb-3">
       <v-col>
         <v-card class="compact-card">
 
@@ -142,23 +171,16 @@ watch(
 
             <!-- 操作按钮 -->
             <v-col cols="3" class="d-flex align-center justify-end" style="gap: 4px;">
-              <v-btn icon variant="text" @click="playSong(song)">
-                <span v-if="currentMusic.currentSong.id!==song.id" class="material-symbols-outlined">play_arrow</span>
-                <span v-if="currentMusic.currentSong.id===song.id" class="material-symbols-outlined">pause_circle</span>
+              <v-btn icon variant="text" @click="togglePlayPause(song)">
+                <span v-if="currentMusic.currentSong.id===song.id && currentMusic.isPlaying" class="material-symbols-outlined">pause_circle</span>
+                <span v-if="currentMusic.currentSong.id!==song.id||!currentMusic.isPlaying" class="material-symbols-outlined">play_arrow</span>
               </v-btn>
 
-              <v-btn
-                  v-if="authStore.user.role === 'admin'"
-                  @click="startEditSong(song)"
-                  class="me-1"
-              >
-                更新
+              <v-btn icon variant="text" v-if="authStore.user.role === 'admin'" @click="startEditSong(song)" class="me-1">
+                <span class="material-symbols-outlined">edit_square</span>
               </v-btn>
-              <v-btn
-                  v-if="authStore.user.role === 'admin'"
-                  @click="deleteSong(song)"
-              >
-                删除
+              <v-btn icon variant="text" v-if="authStore.user.role === 'admin'" @click="deleteSong(song)">
+                <span class="material-symbols-outlined">delete</span>
               </v-btn>
             </v-col>
           </v-row>

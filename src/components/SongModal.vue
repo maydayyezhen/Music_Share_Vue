@@ -2,7 +2,7 @@
 import {onMounted, ref} from "vue";
 import ArtistModal from "@/components/ArtistModal.vue";
 import AlbumModal from "@/components/AlbumModal.vue";
-import {apiGetAlbumsByArtistId, apiGetAllAlbums, apiGetCoverFileUrlById} from "@/api/album-api.js";
+import {apiGetAlbumsByArtistId, apiGetAllAlbums, apiGetCoverFileUrl} from "@/api/album-api.js";
 import {apiGetAllArtists, apiGetArtistAvatarFileUrl} from "@/api/artist-api.js";
 import {apiCreateSong, apiUploadAudioFile, apiUploadLrcFile} from "@/api/song-api.js";
 import {Artist} from "@/models/artist.js";
@@ -112,61 +112,149 @@ const visible = defineModel('visible')
   <v-dialog v-model="visible" max-width="600px">
     <v-card>
       <v-card-title>
-        <span class="headline">添加音乐</span>
-        <v-btn class="cancel-btn" icon @click="visible = false">
-          <v-icon>mdi-close</v-icon>
-        </v-btn>
+        <v-row>
+          <v-col cols="auto">
+            <span class="headline">添加音乐</span>
+          </v-col>
+          <v-col cols="auto" class="ml-auto">
+            <v-btn variant="text" class="mr-0" icon @click="visible = false">
+              <span class="material-symbols-outlined">close</span>
+            </v-btn>
+          </v-col>
+        </v-row>
       </v-card-title>
 
       <v-card-text>
-        <v-text-field
-            v-model="newSong.title"
-            label="歌曲名"
-            placeholder="输入歌曲名"
-            outlined
-        />
+        <v-row align="center" justify="center" style="gap: 16px;">
+          <v-col cols="auto">
+            <v-text-field
+                variant="outlined"
+                color="primary"
+                rounded="lg"
+                elevation="1"
+                v-model="newSong.title"
+                label="歌曲名"
+                placeholder="输入歌曲名"
+                outlined
+                style="width: 200px"
+            />
+          </v-col>
+        </v-row>
 
-        <!-- 歌手选择 -->
-        <v-select
-            ref="artistSelect"
-            v-model="selectedArtist"
-            :items="artists"
-            item-title="name"
-            label="选择歌手"
-            @update:modelValue="onArtistChange"
-            return-object
-            outlined
+        <v-row
+            align="center"
+            justify="center"
+            style="gap: 16px;"
         >
-          <template v-slot:prepend-item>
-            <v-btn @click="artistModalVisible = true" color="primary" small>+</v-btn>
-          </template>
-        </v-select>
+          <v-col cols="auto">
+            <v-autocomplete
+                variant="outlined"
+                color="primary"
+                rounded="xl"
+                ref="artistSelect"
+                v-model="selectedArtist"
+                :items="artists"
+                item-title="name"
+                label="选择歌手"
+                @update:modelValue="onArtistChange"
+                return-object
+                style="width: 300px"
+            >
 
-        <!-- 歌手封面 -->
-        <div v-if="selectedArtist" class="image-container">
-          <img :src="apiGetArtistAvatarFileUrl(selectedArtist.avatarUrl)" alt="歌手头像" />
-        </div>
+              <template v-slot:prepend-item>
+                <v-btn
+                    @click="artistModalVisible = true"
+                    color="primary"
+                    size="small"
+                    block
+                    class="justify-center"
+                >
+                  + 添加歌手
+                </v-btn>
+              </template>
 
-        <!-- 专辑选择 -->
-        <v-select
-            v-model="selectedAlbum"
-            :items="albums"
-            item-title="title"
-            label="选择专辑"
-            return-object
-            outlined
-        >
-          <template v-slot:prepend-item>
-            <v-btn @click="albumModalVisible=true" color="primary" small>+</v-btn>
-          </template>
-        </v-select>
 
-        <!-- 专辑封面 -->
-        <div v-if="selectedAlbum" class="image-container">
-          <img :src="apiGetCoverFileUrlById(selectedAlbum.coverUrl)" alt="专辑封面" />
-        </div>
+              <template v-slot:item="{ item, props }">
+                <v-list-item v-bind="props" >
+                  <template v-slot:prepend>
+                    <v-avatar size="30" class="mr-2">
+                      <v-img :src="apiGetArtistAvatarFileUrl(item.raw.avatarUrl)" />
+                    </v-avatar>
+                  </template>
+                  <template v-slot:title>
+                    {{ item.raw.name }}
+                  </template>
+                </v-list-item>
+              </template>
+
+              <template v-slot:selection="{ item }">
+                <v-avatar size="30" class="mr-2">
+                  <v-img :src="apiGetCoverFileUrl(item.raw.avatarUrl)" />
+                </v-avatar>
+                {{ item.raw.name }}
+              </template>
+
+            </v-autocomplete>
+          </v-col>
+        </v-row>
+
+
+        <v-row align="center" justify="center" style="gap: 16px;">
+          <v-col cols="auto">
+            <v-autocomplete
+                variant="outlined"
+                color="primary"
+                rounded="xl"
+                v-model="selectedAlbum"
+                :items="albums"
+                item-title="title"
+                return-object
+                label="选择专辑"
+                style="width: 300px"
+            >
+
+              <template v-slot:prepend-item>
+                <v-btn
+                    @click="albumModalVisible = true"
+                    color="primary"
+                    size="small"
+                    block
+                    class="justify-center"
+                >
+                  + 添加专辑
+                </v-btn>
+              </template>
+
+              <template v-slot:item="{ item, props }">
+                <v-list-item v-bind="props" >
+                  <template v-slot:prepend>
+                    <v-avatar size="30" class="mr-2" :rounded="0">
+                      <v-img :src="apiGetCoverFileUrl(item.raw.coverUrl)" />
+                    </v-avatar>
+                  </template>
+                  <template v-slot:title>
+                    {{ item.raw.title }}
+                  </template>
+                </v-list-item>
+              </template>
+
+              <template v-slot:selection="{ item }">
+                  <v-avatar size="30" class="mr-2" :rounded="0">
+                    <v-img :src="apiGetCoverFileUrl(item.raw.coverUrl)" />
+                  </v-avatar>
+                {{ item.raw.title }}
+              </template>
+            </v-autocomplete>
+          </v-col>
+        </v-row>
+
+
 
         <v-text-field
+            variant="outlined"
+            color="primary"
+            rounded="lg"
+            elevation="1"
             v-model="formattedDuration"
             label="时长（mm:ss）"
             placeholder="时长（mm:ss）"
@@ -175,6 +263,10 @@ const visible = defineModel('visible')
         />
 
         <v-file-input
+            variant="outlined"
+            color="primary"
+            rounded="lg"
+            elevation="1"
             id="audio-file-input"
             label="选择音频文件"
             accept="audio/*"
@@ -183,6 +275,10 @@ const visible = defineModel('visible')
         />
 
         <v-file-input
+            variant="outlined"
+            color="primary"
+            rounded="lg"
+            elevation="1"
             id="lyrics-file-input"
             label="选择歌词文件"
             accept=".lrc,.txt"
@@ -192,6 +288,10 @@ const visible = defineModel('visible')
 
 
         <v-textarea
+            variant="outlined"
+            color="primary"
+            rounded="lg"
+            elevation="1"
             v-model="newSong.lyrics"
             label="歌词"
             placeholder="请输入歌词"
@@ -221,27 +321,4 @@ const visible = defineModel('visible')
 </template>
 
 <style scoped>
-.cancel-btn {
-  position: absolute;
-  top: 0;
-  right: 0;
-}
-
-.upload-btn {
-  width: 100%;
-  margin-top: 20px;
-}
-
-.image-container {
-  margin-top: 10px;
-  width: 80px;
-  height: 80px;
-}
-
-.image-container img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 50%;
-}
 </style>

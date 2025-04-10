@@ -1,6 +1,6 @@
 <script setup>
 import {useMusicStore} from "@/stores/musicStore.js";
-import {apiGetAudioFileUrlById, apiGetLrcFileUrlById} from "@/api/song-api.js";
+import {apiGetAudioFileUrl, apiGetLyricFileUrl} from "@/api/song-api.js";
 import {onMounted, ref, watch} from "vue";
 const currentMusic = useMusicStore();
 const audioRef = ref(null);
@@ -44,7 +44,7 @@ const parseLRC = (lrcText) => {
 
 const loadLRC = async () => {
   if (!currentMusic.currentSong.id) return;
-  const res = await fetch(apiGetLrcFileUrlById(currentMusic.currentSong.lyricUrl));
+  const res = await fetch(apiGetLyricFileUrl(currentMusic.currentSong.lyricUrl));
   const text = await res.text()
   lyrics.value = parseLRC(text)
 }
@@ -71,9 +71,10 @@ const previousSong = () => {
 }
 
 onMounted(() => {
+  currentMusic.setAudio(audioRef.value);
   loadLRC()
   if(currentMusic.currentSong.id)
-  audioRef.value.src = apiGetAudioFileUrlById(currentMusic.currentSong.audioUrl);
+  audioRef.value.src = apiGetAudioFileUrl(currentMusic.currentSong.audioUrl);
   if (audioRef.value.src) {
     audioRef.value.addEventListener('ended', nextSong)
   }
@@ -82,15 +83,16 @@ onMounted(() => {
 watch(() => currentMusic.currentSong.audioUrl, (newAudioUrl) => {
   if (newAudioUrl) {
     loadLRC()
-    audioRef.value.src = apiGetAudioFileUrlById(newAudioUrl)
-    audioRef.value.play();
+    audioRef.value.src = apiGetAudioFileUrl(newAudioUrl)
+    currentMusic.play();
   }
   else {
-    audioRef.value.pause()
+    currentMusic.pause();
     audioRef.value.src = ''
     lyrics.value = [];
   }
 })
+
 </script>
 
 <template>
@@ -178,6 +180,8 @@ watch(() => currentMusic.currentSong.audioUrl, (newAudioUrl) => {
             ref="audioRef"
             controls
             @timeupdate="onTimeUpdate"
+            @play="currentMusic.isPlaying=true"
+            @pause="currentMusic.isPlaying=false"
             style="width: 100%; max-width: 300px;"
         ></audio>
       </v-col>
@@ -192,10 +196,18 @@ watch(() => currentMusic.currentSong.audioUrl, (newAudioUrl) => {
       height="48"
       @click="showSheetChange"
   >
-    <div class="text-subtitle-2 font-weight-medium">
-      正在播放：{{ currentMusic.currentSong.title }}
+    <div v-if="currentMusic.isPlaying && currentMusic.currentSong.id" class="text-subtitle-2 font-weight-medium">
+      正在播放：{{ currentMusic.currentSong.title }} - {{ currentMusic.currentSong.artist.name }}
     </div>
-    <span class="material-symbols-outlined expand-icon">expand_less</span>
+
+    <div v-else-if="!currentMusic.isPlaying && currentMusic.currentSong.id" class="text-subtitle-2 font-weight-medium">
+      已暂停：{{ currentMusic.currentSong.title }} - {{ currentMusic.currentSong.artist.name }}
+    </div>
+
+    <div v-else class="text-subtitle-2 font-weight-medium">
+      当前没有播放的歌曲
+    </div>
+
   </v-btn>
 </template>
 
@@ -237,10 +249,6 @@ watch(() => currentMusic.currentSong.audioUrl, (newAudioUrl) => {
   width: auto;
   max-width: 90%;
   min-width: 280px;
-}
-
-.expand-icon {
-  margin-left: 12px;
 }
 
 v-list-item-title {

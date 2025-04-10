@@ -4,7 +4,7 @@ import{Artist} from "@/models/artist.js";
 import {apiGetArtistAvatarFileUrl, apiGetArtistById} from "@/api/artist-api.js";
 import {useRoute} from "vue-router";
 import {Album} from "@/models/album.js";
-import {apiGetAlbumsByArtistId, apiGetCoverFileUrlById} from "@/api/album-api.js";
+import {apiGetAlbumsByArtistId, apiGetCoverFileUrl} from "@/api/album-api.js";
 import {Song} from "@/models/song.js";
 import {apiGetSongsByArtistId} from "@/api/song-api.js";
 import SongList from "@/components/SongList.vue";
@@ -85,7 +85,7 @@ onMounted(async () => {
             max-width="160"
         >
           <v-img
-              :src="apiGetCoverFileUrlById(album.coverUrl)"
+              :src="apiGetCoverFileUrl(album.coverUrl)"
               alt="专辑封面"
               height="120"
               width="120"
