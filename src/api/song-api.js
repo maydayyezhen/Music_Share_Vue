@@ -21,19 +21,19 @@ export const apiCreateSong = (songData) => {
     return axios.post(`${API_BASE_URL}/songs`, songData);
 };
 //上传音频文件
-export const apiUploadAudioFile = (audioFile) => {
+export const apiUploadAudioFile = (id,audioFile) => {
     const formData = new FormData();
     formData.append('audioFile', audioFile);
-    return axios.post(`${API_BASE_URL}/songs/audioFile`, formData,{
+    return axios.post(`${API_BASE_URL}/songs/${id}/audioFile`, formData,{
         headers: { 'Content-Type': 'multipart/form-data' }
     });
 }
 
 //上传歌词文件
-export const apiUploadLrcFile = (lrcFile) => {
+export const apiUploadLrcFile = (id,lrcFile) => {
     const formData = new FormData();
     formData.append('lrcFile', lrcFile);
-    return axios.post(`${API_BASE_URL}/songs/lrcFile`, formData,{
+    return axios.post(`${API_BASE_URL}/songs/${id}/lrcFile`, formData,{
         headers: { 'Content-Type': 'multipart/form-data' }
     });
 }
@@ -66,20 +66,21 @@ export const apiDeleteLrcFileBySongId = (id) => {
 
 //文件操作
 //获取音频URL
-export const apiGetAudioFileUrlById = (id) => {
-    return `${API_BASE_URL}/songs/${id}/audioFile`;
+export const apiGetAudioFileUrlById = (fileUrl) => {
+    return `${API_BASE_URL}/${fileUrl}`;
 }
 
 //获取歌词URL
-export const apiGetLrcFileUrlById = (id) => {
-    return `${API_BASE_URL}/songs/${id}/lrcFile`;
+export const apiGetLrcFileUrlById = (fileUrl) => {
+    return `${API_BASE_URL}/${fileUrl}`;
 }
 
 //通过歌曲ID获取封面URL
-export const apiGetCoverFileUrlBySongId = (id) => {
-    if(id===null)
+export const apiGetCoverFileUrlBySongId = async (id) => {
+    if (id === null)
         return '';
-    return `${API_BASE_URL}/songs/${id}/coverFile`;
+    const response = await axios.get(`${API_BASE_URL}/songs/${id}/coverUrl`);
+    return `${API_BASE_URL}/${response.data}`;
 }
 
 

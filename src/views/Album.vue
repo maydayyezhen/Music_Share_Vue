@@ -39,7 +39,7 @@ function changeTab(tab) {
     <v-row align="center" class="mb-6" justify="center">
       <v-col cols="12" md="4" class="text-center">
         <v-img
-            :src="apiGetCoverFileUrlById(album.id)"
+            :src="apiGetCoverFileUrlById(album.coverUrl)"
             alt="专辑封面"
             class="mx-auto rounded-lg elevation-4"
             height="200"

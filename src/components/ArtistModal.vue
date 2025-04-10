@@ -25,13 +25,10 @@ const selectAvatar = (event) => {
 
 const emit = defineEmits(["close","artist-created"]);
 const upload = async () => {
-  const response = await apiUploadAvatarFile(selectedImgFile.value);
-  newArtist.value.avatarFilename = response.data;
-
-  const listResponse = await apiCreateArtist(newArtist.value);
-  const createdArtist = listResponse.data;
+  const response = await apiCreateArtist(newArtist.value);
+  await apiUploadAvatarFile(response.data.id,selectedImgFile.value);
+  const createdArtist = response.data;
   emit('artist-created', createdArtist);
-
   alert("上传成功");
   visible.value = false;
 }

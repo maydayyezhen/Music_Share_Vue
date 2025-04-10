@@ -87,16 +87,12 @@ const selectLrcFile = (event) => {
 }
 
 const upload = async () => {
-  const audioResponse = await apiUploadAudioFile(selectedAudioFile.value);
-  const lrcResponse = await apiUploadLrcFile(selectedLrcFile.value);
-
-  newSong.value.audioFilename = audioResponse.data;
-  newSong.value.lrcFilename = lrcResponse.data;
   newSong.value.artist.id = selectedArtist.value.id;
   newSong.value.album.id = selectedAlbum.value.id;
   newSong.value.duration = duration.value;
-
-  await apiCreateSong(newSong.value);
+  const response = await apiCreateSong(newSong.value);
+  await apiUploadLrcFile(response.data.id,selectedLrcFile.value);
+  await apiUploadAudioFile(response.data.id,selectedAudioFile.value);
   alert("上传成功");
   visible.value = false;
 }
@@ -148,7 +144,7 @@ const visible = defineModel('visible')
 
         <!-- 歌手封面 -->
         <div v-if="selectedArtist" class="image-container">
-          <img :src="apiGetArtistAvatarFileUrl(selectedArtist.id)" alt="歌手头像" />
+          <img :src="apiGetArtistAvatarFileUrl(selectedArtist.avatarUrl)" alt="歌手头像" />
         </div>
 
         <!-- 专辑选择 -->
@@ -167,7 +163,7 @@ const visible = defineModel('visible')
 
         <!-- 专辑封面 -->
         <div v-if="selectedAlbum" class="image-container">
-          <img :src="apiGetCoverFileUrlById(selectedAlbum.id)" alt="专辑封面" />
+          <img :src="apiGetCoverFileUrlById(selectedAlbum.coverUrl)" alt="专辑封面" />
         </div>
 
         <v-text-field

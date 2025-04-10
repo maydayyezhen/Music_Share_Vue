@@ -44,7 +44,7 @@ const parseLRC = (lrcText) => {
 
 const loadLRC = async () => {
   if (!currentMusic.currentSong.id) return;
-  const res = await fetch(apiGetLrcFileUrlById(currentMusic.currentSong.id));
+  const res = await fetch(apiGetLrcFileUrlById(currentMusic.currentSong.lyricUrl));
   const text = await res.text()
   lyrics.value = parseLRC(text)
 }
@@ -73,16 +73,16 @@ const previousSong = () => {
 onMounted(() => {
   loadLRC()
   if(currentMusic.currentSong.id)
-  audioRef.value.src = apiGetAudioFileUrlById(currentMusic.currentSong.id);
+  audioRef.value.src = apiGetAudioFileUrlById(currentMusic.currentSong.audioUrl);
   if (audioRef.value.src) {
     audioRef.value.addEventListener('ended', nextSong)
   }
 })
 
-watch(() => currentMusic.currentSong.id, (newId) => {
-  if (newId) {
+watch(() => currentMusic.currentSong.audioUrl, (newAudioUrl) => {
+  if (newAudioUrl) {
     loadLRC()
-    audioRef.value.src = apiGetAudioFileUrlById(newId)
+    audioRef.value.src = apiGetAudioFileUrlById(newAudioUrl)
     audioRef.value.play();
   }
   else {

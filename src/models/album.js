@@ -4,7 +4,7 @@ export const Album = {
     artist: {
         id: null
     },
-    coverFilename: "",
+    coverUrl: "",
     description: "",
     releaseDate: ""
 };

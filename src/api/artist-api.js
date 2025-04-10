@@ -18,10 +18,10 @@ export const apiCreateArtist = (artistData) => {
     return axios.post(`${API_BASE_URL}/artists`, artistData);
 }
 //上传歌手头像
-export const apiUploadAvatarFile = (avatarFile) => {
+export const apiUploadAvatarFile = (id, avatarFile) => {
     const formData = new FormData();
     formData.append('avatarFile', avatarFile);
-    return axios.post(`${API_BASE_URL}/artists/avatarFile`, formData,{
+    return axios.post(`${API_BASE_URL}/artists/${id}/avatarFile`, formData,{
         headers: { 'Content-Type': 'multipart/form-data' }
     });
 }
@@ -40,8 +40,8 @@ export const apiDeleteAvatarFile = (path) => {
 
 
 //获取歌手头像URL
-export  const apiGetArtistAvatarFileUrl = (id) => {
-    if(id===null)
+export  const apiGetArtistAvatarFileUrl = (fileUrl) => {
+    if(fileUrl==="")
         return '';
-    return `${API_BASE_URL}/artists/${id}/avatarFile`;
+    return `${API_BASE_URL}/${fileUrl}`;
 }

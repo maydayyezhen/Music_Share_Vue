@@ -38,13 +38,10 @@ const selectCover = (event) => {
 
 const emit = defineEmits(["albumCreated"]);
 const upload = async () => {
-  const response = await apiUploadCoverFile(selectedImgFile.value);
-  const path = response.data;
-  const normalizePath = (path) => path.replace(/\\/g, '/');
-  newAlbum.value.coverFilename = normalizePath(path);
   newAlbum.value.artist.id = selectedArtist.value.id;
-  const listResponse = await apiCreateAlbum(newAlbum.value);
-  emit("albumCreated", listResponse.data);
+  const response = await apiCreateAlbum(newAlbum.value);
+  await apiUploadCoverFile(response.data.id,selectedImgFile.value);
+  emit("albumCreated", response.data);
   alert("上传成功");
   visible.value = false;
 }
@@ -101,7 +98,7 @@ const visible = defineModel('visible')
 
         <div v-if="selectedArtist?.id" class="my-4 text-center">
           <v-img
-              :src="apiGetArtistAvatarFileUrl(selectedArtist.id)"
+              :src="apiGetArtistAvatarFileUrl(selectedArtist.avatarUrl)"
               width="100"
               height="100"
               cover

@@ -43,7 +43,7 @@ onMounted(async () => {
     <v-row align="center" class="mb-6">
       <v-col cols="12" md="4" class="text-center">
         <v-img
-            :src="apiGetArtistAvatarFileUrl(artist.id)"
+            :src="apiGetArtistAvatarFileUrl(artist.avatarUrl)"
             alt="Artist Image"
             width="150"
             height="150"
@@ -85,7 +85,7 @@ onMounted(async () => {
             max-width="160"
         >
           <v-img
-              :src="apiGetCoverFileUrlById(album.id)"
+              :src="apiGetCoverFileUrlById(album.coverUrl)"
               alt="专辑封面"
               height="120"
               width="120"

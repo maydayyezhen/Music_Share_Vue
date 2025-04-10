@@ -2,7 +2,8 @@
 import {ref, watch} from "vue";
 import {useMusicStore} from "@/stores/musicStore.js";
 import {
-  apiDeleteAudioFileBySongId, apiDeleteLrcFileBySongId,
+  apiDeleteAudioFileBySongId,
+  apiDeleteLrcFileBySongId,
   apiDeleteSongById,
   apiGetCoverFileUrlBySongId,
   apiUpdateSong
@@ -54,6 +55,21 @@ const goToAlbum = (albumId) => {
   router.push(`/album/${albumId}`);
 }
 
+const coverUrls = ref({});
+
+watch(
+    () => props.songs,
+    async (newSongs) => {
+      if (!newSongs || newSongs.length === 0) return;
+      const urlMap = {};
+      for (const song of newSongs) {
+        urlMap[song.id] = await apiGetCoverFileUrlBySongId(song.id);
+      }
+      coverUrls.value = urlMap;
+    },
+    { immediate: true } // 初始就触发一次
+);
+
 
 </script>
 
@@ -83,7 +99,7 @@ const goToAlbum = (albumId) => {
             <!-- 封面图 -->
             <v-col cols="auto">
               <v-img
-                  :src="apiGetCoverFileUrlBySongId(song.id)"
+                  :src="coverUrls[song.id]"
                   alt="歌曲封面"
                   width="80"
                   height="80"
@@ -125,8 +141,12 @@ const goToAlbum = (albumId) => {
             </v-col>
 
             <!-- 操作按钮 -->
-            <v-col cols="auto" class="d-flex align-center justify-end" style="gap: 4px;">
-              <v-btn @click="playSong(song)" class="me-1">播放</v-btn>
+            <v-col cols="3" class="d-flex align-center justify-end" style="gap: 4px;">
+              <v-btn icon variant="text" @click="playSong(song)">
+                <span v-if="currentMusic.currentSong.id!==song.id" class="material-symbols-outlined">play_arrow</span>
+                <span v-if="currentMusic.currentSong.id===song.id" class="material-symbols-outlined">pause_circle</span>
+              </v-btn>
+
               <v-btn
                   v-if="authStore.user.role === 'admin'"
                   @click="startEditSong(song)"

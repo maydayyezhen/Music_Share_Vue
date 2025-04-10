@@ -6,6 +6,12 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 export const apiGetAllAlbums = () => {
     return axios.get(`${API_BASE_URL}/albums`);
 };
+
+//根据歌手ID获取专辑
+export const apiGetAlbumBySongId = (id) => {
+    return axios.get(`${API_BASE_URL}/albums/song/${id}`);
+}
+
 //根据歌手ID获取专辑
 export const apiGetAlbumsByArtistId = (id) => {
     return axios.get(`${API_BASE_URL}/albums/artist/${id}`);
@@ -22,10 +28,10 @@ export const apiCreateAlbum = (albumData) => {
     return axios.post(`${API_BASE_URL}/albums`, albumData);
 }
 //上传专辑封面
-export const apiUploadCoverFile = (coverFile) => {
+export const apiUploadCoverFile = (id,coverFile) => {
     const formData = new FormData();
     formData.append('coverFile', coverFile);
-    return axios.post(`${API_BASE_URL}/albums/coverFile`, formData,{
+    return axios.post(`${API_BASE_URL}/albums/${id}/coverFile`, formData,{
         headers: { 'Content-Type': 'multipart/form-data' }
     });
 }
@@ -43,8 +49,8 @@ export const apiDeleteCoverFileById = (id) => {
 }
 
 //获取封面URL
-export const apiGetCoverFileUrlById = (id) => {
-    if(id===null)
+export const apiGetCoverFileUrlById = (fileUrl) => {
+    if(fileUrl==="")
         return '';
-    return `${API_BASE_URL}/albums/${id}/coverFile`;
+    return `${API_BASE_URL}/${fileUrl}`;
 }
