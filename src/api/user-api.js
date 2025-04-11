@@ -67,3 +67,10 @@ export const apiGetAvatarFileUrlByUserId = async (name) => {
     const response = await axios.get(`${API_BASE_URL}/users/${name}/avatarUrl`);
     return `${API_BASE_URL}/${response.data}`;
 };
+
+// 更新角色
+export const apiUpdateRole = (name, updateName, role) => {
+    return axios.put(`${API_BASE_URL}/users/${name}/manage`, null, {
+        params: { updateName, role }
+    });
+};
