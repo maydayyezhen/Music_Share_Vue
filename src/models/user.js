@@ -3,5 +3,6 @@ export const User = {
     username: "",
     password: "",
     nickname: "",
+    avatarUrl: "",
     role: "USER"
 };
