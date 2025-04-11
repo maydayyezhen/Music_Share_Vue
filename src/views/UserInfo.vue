@@ -4,7 +4,7 @@
     import { apiUpdateUser, apiUpdatePassword, apiUploadAvatarFile } from "@/api/user-api.js";
 
     const authStore = useAuthStore();
-
+    const user = authStore.user;
     // 对话框控制
     const showDialog = ref(false);
 
@@ -28,7 +28,6 @@
         if (file) {
             selectedImgFile.value = file;
             authStore.user.avatarUrl = URL.createObjectURL(file);
-            apiUploadAvatarFile(authStore.name, selectedImgFile.value);
             console.log("📂 选中文件:", file.name);
         } else {
             console.warn("⚠ 没有选中文件");
@@ -36,6 +35,7 @@
     };
 
     const upload = async () => {
+        await apiUploadAvatarFile(authStore.user.username, selectedImgFile.value);
 
         alert("上传成功");
         visible.value = false;
@@ -127,6 +127,7 @@
             <button @click="openDialog" class="edit-button">
                 更改个人信息
             </button>
+            <v-btn @click="upload" color="primary" block class="mt-4">上传</v-btn>
         </div>
 
         <!-- 编辑对话框 -->
