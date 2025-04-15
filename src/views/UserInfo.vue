@@ -217,6 +217,7 @@
         justify-content: center;
     }
 
+
     .avatar {
         width: 100%;
         height: 100%;
