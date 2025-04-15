@@ -77,7 +77,6 @@ const goToSong = (songId) => {
 }
 
 const coverUrls = ref({});
-
 watch(
     () => props.songs,
     async (newSongs) => {

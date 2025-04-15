@@ -1,12 +1,12 @@
 <script setup>
-import {onMounted, ref, watch} from 'vue'
+import {onMounted, ref} from 'vue'
 import { useRoute } from 'vue-router'
 
 import { Album } from "@/models/album.js"
 import { Song } from "@/models/song.js"
 
-import { apiGetAlbumBySongId, apiGetCoverFileUrl} from "@/api/album-api.js"
-import {apiGetAllSongs, apiGetLyricFileUrl, apiGetSongById} from "@/api/song-api.js"
+import {apiGetCoverFileUrl} from "@/api/album-api.js"
+import {apiGetAllSongs, apiGetLyricFileUrl, apiGetSongById,apiGetAlbumBySongId} from "@/api/song-api.js"
 import {useMusicStore} from "@/stores/musicStore.js";
 import EditMusic from "@/components/SongModal.vue";
 

@@ -24,8 +24,8 @@ const authStore = useAuthStore();
 const emit = defineEmits(["deleteAlbum"]);
 
 const getSongsByAlbumId = async (albumId) => {
-  const songsResponse = await apiGetSongsByAlbumId(albumId)
-  songs.value = songsResponse.data
+  const songsResponse = await apiGetSongsByAlbumId(albumId);
+  songs.value = songsResponse.data;
 }
 
 const deleteAlbum = async (album) =>{
@@ -46,16 +46,33 @@ const deleteAlbum = async (album) =>{
   }
 }
 
-onMounted(async () => {
-  const albumsResponse = await apiGetAlbumByAlbumId(route.params.id)
-  album.value = albumsResponse.data
-
-  await getSongsByAlbumId(route.params.id)
-})
-
 function changeTab(tab) {
   activeTab.value = tab
 }
+
+//刷新模块开始
+const songListKey = ref(Date.now())
+const coverImageKey = ref(Date.now())
+const getAlbumById = async (id) => {
+  const albumsResponse = await apiGetAlbumByAlbumId(id);
+  album.value = albumsResponse.data;
+}
+const refreshSongList = () => {
+  songListKey.value = Date.now()
+}
+const refreshCoverImage = () => {
+  coverImageKey.value = Date.now()
+}
+const refreshAll = async () => {
+  await getAlbumById(route.params.id);
+  await getSongsByAlbumId(route.params.id);
+  refreshCoverImage();
+  refreshSongList();
+}
+onMounted(async () => {
+  await refreshAll();
+})
+//刷新模块结束
 </script>
 
 
@@ -65,6 +82,7 @@ function changeTab(tab) {
     <v-row align="center" class="mb-6" justify="center">
       <v-col cols="12" md="4" class="text-center">
         <v-img
+            :key="coverImageKey"
             :src="apiGetCoverFileUrl(album.coverUrl)"
             alt="专辑封面"
             class="mx-auto rounded-lg elevation-4"
@@ -123,7 +141,7 @@ function changeTab(tab) {
     <!-- 内容展示区 -->
     <v-row justify="center" class="album-content">
       <v-col v-if="activeTab === 'playlist'" cols="12">
-        <SongList :songs="songs" @reload-songs="getSongsByAlbumId(route.params.id)" />
+        <SongList :key="songListKey" :songs="songs" @reload-songs="getSongsByAlbumId(route.params.id)" />
       </v-col>
 
       <v-col v-else-if="activeTab === 'description'" cols="12" md="10">
@@ -139,7 +157,7 @@ function changeTab(tab) {
         v-model="editDialogVisible"
         :album-data="album"
         mode="edit"
-        @album-updated="(updatedAlbum) => album = updatedAlbum"
+        @album-updated="refreshAll"
     />
   </v-container>
 </template>

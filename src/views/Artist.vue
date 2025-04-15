@@ -10,8 +10,6 @@ import {
 import {useRoute} from "vue-router";
 import {Album} from "@/models/album.js";
 import {
-  apiDeleteAlbumById,
-  apiDeleteCoverFileById,
   apiGetAlbumsByArtistId,
   apiGetCoverFileUrl
 } from "@/api/album-api.js";

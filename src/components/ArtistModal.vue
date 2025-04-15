@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch} from 'vue'
 import { apiCreateArtist, apiUpdateArtist, apiUploadAvatarFile } from '@/api/artist-api.js'
 import { Artist } from '@/models/artist.js'
 
