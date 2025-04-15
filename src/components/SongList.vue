@@ -13,14 +13,21 @@ import {useAuthStore} from "@/stores/authStore.js";
 import AddMusic from "@/components/SongModal.vue";
 
 const props = defineProps(['songs']);
-const songModalVisible = ref(false);//判断是否显示添加歌曲界面
 const editingSong = ref(null);//用于存储被编辑歌曲的数据
 const currentMusic = useMusicStore();
 const authStore = useAuthStore();
 const emit = defineEmits(["reloadSongs"]);
+const songs = ref([])
+const isSongModalVisible = ref(false)
+const selectedSong = ref(null) // 当前要编辑的歌曲
 
 const startEditSong = (song) => {
   editingSong.value = {...song};
+}
+
+const openAddSongModal = () => {
+  selectedSong.value = null
+  isSongModalVisible.value = true
 }
 
 const updateSong = async () => {
@@ -51,7 +58,7 @@ const togglePlayPause = (currentSong) => {
   }
 };
 
-watch(songModalVisible, (newVal, oldVal) => {
+watch(isSongModalVisible, (newVal, oldVal) => {
   if (oldVal === true && newVal === false) {
     emit("reloadSongs");
   }
@@ -63,6 +70,10 @@ const goToArtist = (artistId) => {
 
 const goToAlbum = (albumId) => {
   router.push(`/album/${albumId}`);
+}
+
+const goToSong = (songId) => {
+  router.push(`/song/${songId}`)
 }
 
 const coverUrls = ref({});
@@ -105,7 +116,7 @@ const filteredItems = computed(() =>
             v-if="authStore.user.role === 'admin'"
             color="primary"
             class="mb-4"
-            @click="songModalVisible = true"
+            @click="openAddSongModal"
         >
           上传歌曲
         </v-btn>
@@ -140,7 +151,13 @@ const filteredItems = computed(() =>
             <!-- 歌名 -->
             <v-col cols="3" style="min-width: 0;">
               <v-card-title class="ellipsis">
-                {{ song.title }}
+                <v-label
+                    @click="goToSong(song.id)"
+                    class="ellipsis"
+                    style="color: black; font-weight: bold;"
+                >
+                  {{ song.title }}
+                </v-label>
               </v-card-title>
             </v-col>
 
@@ -171,7 +188,7 @@ const filteredItems = computed(() =>
 
             <!-- 操作按钮 -->
             <v-col cols="3" class="d-flex align-center justify-end" style="gap: 4px;">
-              <v-btn icon variant="text" @click="togglePlayPause(song)">
+              <v-btn icon variant="text" @click="togglePlayPause(song)" >
                 <span v-if="currentMusic.currentSong.id===song.id && currentMusic.isPlaying" class="material-symbols-outlined">pause_circle</span>
                 <span v-if="currentMusic.currentSong.id!==song.id||!currentMusic.isPlaying" class="material-symbols-outlined">play_arrow</span>
               </v-btn>
@@ -218,8 +235,8 @@ const filteredItems = computed(() =>
     </v-row>
     <!-- 添加歌曲弹窗 -->
     <AddMusic
-        v-if="songModalVisible"
-        v-model:visible="songModalVisible"
+        v-if="isSongModalVisible"
+        v-model:visible="isSongModalVisible"
     />
   </v-container>
 </template>

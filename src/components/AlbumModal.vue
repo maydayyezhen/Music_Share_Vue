@@ -1,27 +1,79 @@
 <script setup>
-import { onMounted, ref } from "vue";
+import {onMounted, ref, watch} from "vue";
 import ArtistModal from "@/components/ArtistModal.vue";
-import {apiGetAllArtists,apiGetArtistAvatarFileUrl} from "@/api/artist-api.js";
-import {apiCreateAlbum, apiUploadCoverFile} from "@/api/album-api.js";
+import {
+  apiGetAllArtists,
+  apiGetArtistAvatarFileUrl
+} from "@/api/artist-api.js";
+import {
+  apiCreateAlbum,
+  apiUploadCoverFile,
+  apiUpdateAlbum
+} from "@/api/album-api.js";
 import {Album} from "@/models/album.js";
 import {Artist} from "@/models/artist.js";
 
-const selectedArtist = ref({ ...Artist });
-const artists = ref([{ ...Artist }]);
+// Props: 专辑初始值和是否编辑
+const props = defineProps({
+  modelValue: Boolean,
+  albumData: {
+    type: Object,
+    default: () => ({...Album})
+  },
+  mode: {
+    type: String,
+    default: 'create' // or 'edit'
+  }
+});
 
+const emit = defineEmits(["update:modelValue", "albumCreated", "albumUpdated"]);
+
+const visible = ref(props.modelValue);
+watch(() => props.modelValue, val => (visible.value = val));
+watch(visible, val => emit("update:modelValue", val));
+
+const artists = ref([]);
+const selectedArtist = ref({...Artist});
+const currentAlbum = ref({...Album});
+const selectedImgFile = ref(null);
+const imgUrl = ref("");
+const artistModalVisible = ref(false);
+
+// 初始化
 const getAllArtists = async () => {
   const response = await apiGetAllArtists();
   artists.value = response.data;
-}
-onMounted(getAllArtists);
+};
 
+onMounted(getAllArtists)
 
-const newAlbum = ref({...Album});
-const selectedImgFile = ref(null);
-const imgUrl = ref('');
+watch(
+    () => props.albumData,
+    (newAlbum) => {
+      if (props.mode === 'edit' && newAlbum) {
+        currentAlbum.value = { ...newAlbum }
+        selectedArtist.value = newAlbum.artist
+        imgUrl.value = apiGetArtistAvatarFileUrl(newAlbum.coverUrl)
+      } else {
+        currentAlbum.value = { ...Album }
+        selectedArtist.value = { ...Artist }
+        imgUrl.value = ''
+      }
+    },
+    { immediate: true }
+)
+
+watch(() => props.mode, (newMode) => {
+  if (newMode === 'create') {
+    currentAlbum.value = { ...Album }
+    selectedArtist.value = { ...Artist }
+    imgUrl.value = ''
+  }
+})
+
 
 const triggerFileInput = () => {
-  document.getElementById('cover-file-input').click();
+  document.getElementById("cover-file-input").click();
 };
 
 const selectCover = (event) => {
@@ -29,38 +81,41 @@ const selectCover = (event) => {
   if (file) {
     selectedImgFile.value = file;
     imgUrl.value = URL.createObjectURL(file);
-    console.log("📂 选中文件:", file.name);
-  } else {
-    console.warn("⚠ 没有选中文件");
   }
 };
 
-
-const emit = defineEmits(["albumCreated"]);
 const upload = async () => {
-  newAlbum.value.artist.id = selectedArtist.value.id;
-  const response = await apiCreateAlbum(newAlbum.value);
-  await apiUploadCoverFile(response.data.id,selectedImgFile.value);
-  emit("albumCreated", response.data);
-  alert("上传成功");
+  currentAlbum.value.artist.id = selectedArtist.value.id;
+
+  if (props.mode === "create") {
+    const res = await apiCreateAlbum(currentAlbum.value);
+    if (selectedImgFile.value) {
+      await apiUploadCoverFile(res.data.id, selectedImgFile.value);
+    }
+    emit("albumCreated", res.data);
+  } else {
+    await apiUpdateAlbum(currentAlbum.value);
+    if (selectedImgFile.value) {
+      await apiUploadCoverFile(currentAlbum.value.id, selectedImgFile.value);
+    }
+    emit("albumUpdated", currentAlbum.value);
+  }
+
+  alert("操作成功！");
   visible.value = false;
-}
+};
 
 const handleArtistCreated = async (newArtist) => {
   await getAllArtists();
-  selectedArtist.value = artists.value.find(artist => artist.id === newArtist.id);
-}
-
-const artistModalVisible = ref(false);
-const visible = defineModel('visible')
-
+  selectedArtist.value = artists.value.find(a => a.id === newArtist.id);
+};
 </script>
 
 <template>
   <v-dialog v-model="visible" max-width="600px">
     <v-card>
       <v-card-title class="d-flex justify-space-between align-center">
-        <span>新建专辑</span>
+        <span>{{ mode === 'edit' ? '编辑专辑' : '新建专辑' }}</span>
         <v-btn icon @click="visible = false">
           <v-icon>mdi-close</v-icon>
         </v-btn>
@@ -78,11 +133,10 @@ const visible = defineModel('visible')
               @click="triggerFileInput"
           ></v-img>
           <v-btn v-else @click="triggerFileInput" color="primary">点击上传</v-btn>
-          <input id="cover-file-input" type="file" ref="fileInput" @change="selectCover" accept="image/*" style="display: none;" />
+          <input id="cover-file-input" type="file" @change="selectCover" accept="image/*" style="display: none;"/>
         </div>
 
-        <v-text-field v-model="newAlbum.title" label="专辑名" outlined />
-
+        <v-text-field v-model="currentAlbum.title" label="专辑名" outlined/>
         <v-select
             v-model="selectedArtist"
             :items="artists"
@@ -103,13 +157,12 @@ const visible = defineModel('visible')
               height="100"
               cover
               class="mx-auto rounded"
-          ></v-img>
+          />
         </div>
 
-        <v-textarea v-model="newAlbum.description" label="简介" outlined auto-grow />
-
+        <v-textarea v-model="currentAlbum.description" label="简介" outlined auto-grow/>
         <v-text-field
-            v-model="newAlbum.releaseDate"
+            v-model="currentAlbum.releaseDate"
             label="发行日期"
             type="date"
             outlined
@@ -121,11 +174,10 @@ const visible = defineModel('visible')
       </v-card-actions>
     </v-card>
 
-    <!-- 歌手新增弹窗 -->
-    <artist-modal v-if="artistModalVisible" v-model:visible="artistModalVisible" @artist-created="handleArtistCreated"/>
+    <artist-modal
+        v-if="artistModalVisible"
+        v-model:visible="artistModalVisible"
+        @artist-created="handleArtistCreated"
+    />
   </v-dialog>
 </template>
-
-
-<style scoped>
-</style>

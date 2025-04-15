@@ -15,6 +15,10 @@ export const apiGetSongsByArtistId = (id) => {
 export const apiGetSongsByAlbumId = (id) => {
     return axios.get(`${API_BASE_URL}/songs/album/${id}`);
 }
+//通过歌曲ID获取歌曲
+export const apiGetSongById = (id) => {
+    return axios.get(`${API_BASE_URL}/songs/${id}`);
+}
 
 //POST
 //创建歌曲

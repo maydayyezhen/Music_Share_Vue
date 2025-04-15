@@ -17,6 +17,7 @@ const musicStore = useMusicStore();
       <MusicPlayer @next-song="musicStore.nextSong" />
     </v-footer>
   </v-app>
+
 </template>
 
 

@@ -1,18 +1,50 @@
 <script setup>
 import {onMounted, ref} from 'vue'
 import{Artist} from "@/models/artist.js";
-import {apiGetArtistAvatarFileUrl, apiGetArtistById} from "@/api/artist-api.js";
+import {
+  apiDeleteArtistById,
+  apiDeleteAvatarFileById,
+  apiGetArtistAvatarFileUrl,
+  apiGetArtistById
+} from "@/api/artist-api.js";
 import {useRoute} from "vue-router";
 import {Album} from "@/models/album.js";
-import {apiGetAlbumsByArtistId, apiGetCoverFileUrl} from "@/api/album-api.js";
+import {
+  apiDeleteAlbumById,
+  apiDeleteCoverFileById,
+  apiGetAlbumsByArtistId,
+  apiGetCoverFileUrl
+} from "@/api/album-api.js";
 import {Song} from "@/models/song.js";
 import {apiGetSongsByArtistId} from "@/api/song-api.js";
 import SongList from "@/components/SongList.vue";
 import router from "@/router/index.js";
+import ArtistModal from '@/components/ArtistModal.vue'
+import {useAuthStore} from "@/stores/authStore.js";
+
 const route = useRoute();
 const artist = ref({...Artist})
 const albums = ref([{...Album}]);
 const songs = ref([{...Song}]);
+const artistModalVisible = ref(false)
+const selectedArtist = ref(null)
+const editArtistMode = ref('create')
+const authStore = useAuthStore();
+
+const openEditArtistModal = (artist) => {
+  selectedArtist.value = { ...artist }
+  editArtistMode.value = 'edit'
+  artistModalVisible.value = true
+}
+
+const handleArtistUpdated = async (updatedArtist) => {
+  try {
+    const { data } = await apiGetArtistById(updatedArtist.id)
+    artist.value = data
+  } catch (err) {
+    console.error("更新后获取歌手信息失败", err)
+  }
+}
 
 const getSongsByArtistId = async (artistId) => {
   const response = await apiGetSongsByArtistId(artistId);
@@ -22,6 +54,23 @@ const getSongsByArtistId = async (artistId) => {
 const goToAlbum = (albumId) => {
   router.push(`/album/${albumId}`);
 }
+
+const deleteArtist = async (artist) => {
+  const confirmed = window.confirm(`确定要删除歌手「${artist.name}」吗？此操作会删除歌手旗下的所有专辑和歌曲，且无法撤销。`);
+  if (!confirmed) return;
+
+  try {
+    if (artist.avatarUrl) {
+      await apiDeleteAvatarFileById(artist.id);
+    }
+    await apiDeleteArtistById(artist.id);
+    alert("删除成功");
+    await router.push('/music_db'); // 删除后返回首页或歌手列表页
+  } catch (error) {
+    console.error("删除失败", error);
+    alert("删除失败，请稍后再试");
+  }
+};
 
 onMounted(async () => {
   const artistResponse = await apiGetArtistById(route.params.id);
@@ -60,6 +109,31 @@ onMounted(async () => {
         <p class="text-subtitle-1 text-grey-darken-1">
           {{ artist.bio }}
         </p>
+
+        <v-row>
+          <v-btn
+              class="mt-5"
+              size="small"
+              color="primary"
+              @click="openEditArtistModal(artist)"
+              style="width: 100px;"
+          >
+            编辑信息
+          </v-btn>
+
+          <v-btn
+              class="mt-5 ml-4"
+              size="small"
+              color="primary"
+              v-if="authStore.user.role === 'admin'"
+              @click="deleteArtist(artist)"
+              style="width: 100px;"
+          >
+            删除歌手
+          </v-btn>
+
+        </v-row>
+
       </v-col>
     </v-row>
 
@@ -79,7 +153,7 @@ onMounted(async () => {
       >
         <v-card
             @click="goToAlbum(album.id)"
-            class="pa-2 hoverable text-center"
+            class="pa-2 hover able text-center"
             elevation="1"
             rounded="lg"
             max-width="160"
@@ -109,6 +183,13 @@ onMounted(async () => {
         @reload-songs="getSongsByArtistId(route.params.id)"
     />
   </v-container>
+  <artist-modal
+      v-if="artistModalVisible"
+      v-model="artistModalVisible"
+      :artist-data="selectedArtist"
+      :mode="editArtistMode"
+      @artist-updated="handleArtistUpdated"
+  />
 </template>
 
 <style scoped>

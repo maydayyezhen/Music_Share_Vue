@@ -1,23 +1,49 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
+import {useAuthStore} from "@/stores/authStore.js";
 
 import { Album } from "@/models/album.js"
 import { Song } from "@/models/song.js"
 
-import { apiGetAlbumByAlbumId, apiGetCoverFileUrl } from "@/api/album-api.js"
+import {apiDeleteAlbumById, apiDeleteCoverFileById, apiGetAlbumByAlbumId, apiGetCoverFileUrl} from "@/api/album-api.js"
 import { apiGetSongsByAlbumId } from "@/api/song-api.js"
 
 import SongList from "@/components/SongList.vue"
+import AlbumModal from "@/components/AlbumModal.vue"
+import { useRouter } from 'vue-router'
 
+
+const router = useRouter()
 const route = useRoute()
 const album = ref({ ...Album })
 const songs = ref([{ ...Song }])
 const activeTab = ref('playlist') // 当前选中的 tab
+const editDialogVisible = ref(false)
+const authStore = useAuthStore();
+const emit = defineEmits(["deleteAlbum"]);
 
 const getSongsByAlbumId = async (albumId) => {
   const songsResponse = await apiGetSongsByAlbumId(albumId)
   songs.value = songsResponse.data
+}
+
+const deleteAlbum = async (album) =>{
+  const confirmed = window.confirm(`确定要删除专辑《${album.title}》吗？此操作会一并删除专辑内的所有歌曲，且无法撤销。`);
+  if (!confirmed) return;
+
+  try {
+    if (album.coverUrl){
+      await apiDeleteCoverFileById(album.id);
+    }
+    await apiDeleteAlbumById(album.id);
+    alert("删除成功");
+    emit("deleteAlbum");
+    await router.push('/music_db')
+  } catch (error) {
+    console.error("删除失败", error);
+    alert("删除失败，请稍后再试");
+  }
 }
 
 onMounted(async () => {
@@ -51,6 +77,29 @@ function changeTab(tab) {
       <v-col cols="12" md="8" class="d-flex flex-column justify-center">
         <h1 class="text-h4 font-weight-medium mb-2">{{ album.title }}</h1>
         <p class="text-subtitle-1 text-grey-darken-1">发行日期：{{ album.releaseDate }}</p>
+        <v-row>
+
+          <v-btn
+              class="mt-5"
+              size="small"
+              color="primary"
+              @click="editDialogVisible = true"
+              style="width: 100px;"
+          >
+            编辑信息
+          </v-btn>
+          <v-btn
+              class="mt-5 ml-4"
+              size="small"
+              color="primary"
+              v-if="authStore.user.role === 'admin'"
+              @click="deleteAlbum(album)"
+              style="width: 100px;"
+          >
+            删除专辑
+          </v-btn>
+
+        </v-row>
       </v-col>
     </v-row>
 
@@ -85,6 +134,13 @@ function changeTab(tab) {
         </v-card>
       </v-col>
     </v-row>
+
+    <album-modal
+        v-model="editDialogVisible"
+        :album-data="album"
+        mode="edit"
+        @album-updated="(updatedAlbum) => album = updatedAlbum"
+    />
   </v-container>
 </template>
 

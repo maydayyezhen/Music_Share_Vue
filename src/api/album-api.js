@@ -8,7 +8,7 @@ export const apiGetAllAlbums = () => {
     return axios.get(`${API_BASE_URL}/albums`);
 };
 
-//根据歌手ID获取专辑
+//根据歌曲ID获取专辑
 export const apiGetAlbumBySongId = (id) => {
     return axios.get(`${API_BASE_URL}/albums/song/${id}`);
 }
@@ -17,6 +17,7 @@ export const apiGetAlbumBySongId = (id) => {
 export const apiGetAlbumsByArtistId = (id) => {
     return axios.get(`${API_BASE_URL}/albums/artist/${id}`);
 }
+
 //根据专辑id获取专辑
 export const apiGetAlbumByAlbumId = (id) => {
     return axios.get(`${API_BASE_URL}/albums/${id}`);
@@ -38,12 +39,15 @@ export const apiUploadCoverFile = (id,coverFile) => {
 }
 
 //PUT
-
+export const apiUpdateAlbum = (albumData) => {
+    return axios.put(`${API_BASE_URL}/albums`,albumData);
+}
 //DELETE
 //删除专辑
 export const apiDeleteAlbumById = (id) => {
     return axios.delete(`${API_BASE_URL}/albums/${id}`);
 }
+
 //删除专辑封面
 export const apiDeleteCoverFileById = (id) => {
     return axios.delete(`${API_BASE_URL}/albums/${id}/coverFile`);

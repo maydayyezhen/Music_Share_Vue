@@ -29,16 +29,17 @@ export const apiUploadAvatarFile = (id, avatarFile) => {
 
 //DELETE
 //删除歌手
-export const apiDeleteArtist = (id) => {
+export const apiDeleteArtistById = (id) => {
     return axios.delete(`${API_BASE_URL}/artists/${id}`);
 }
 //删除歌手头像
-export const apiDeleteAvatarFile = (path) => {
-    return axios.delete(`${API_BASE_URL}/artists/delete`, {
-        params: { path: path }
-    });
+export const apiDeleteAvatarFileById = (id) => {
+    return axios.delete(`${API_BASE_URL}/artists/${id}/avatarFile`);
 }
 
+export const apiUpdateArtist = (artistData) =>{
+    return axios.put(`${API_BASE_URL}/artists`,artistData)
+}
 
 //获取歌手头像URL
 export  const apiGetArtistAvatarFileUrl = (fileUrl) => {

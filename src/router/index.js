@@ -9,6 +9,8 @@ import UserInfo from "@/views/UserInfo.vue";
 import { useAuthStore } from '@/stores/authStore';
 import Artist from "@/views/Artist.vue";
 import Album from "@/views/Album.vue";
+import Song from "@/views/Song.vue";
+
 
 const routes = [
     { path: '/', component: Home },
@@ -19,7 +21,8 @@ const routes = [
     { path: '/user_manage', component: UserManage },
     { path: '/user_info', component: UserInfo },
     { path: "/artist/:id", component: Artist },
-    { path: "/album/:id", component: Album }
+    { path: "/album/:id", component: Album },
+    { path: "/song/:id", component: Song}
 ]
 
 const router = createRouter({
