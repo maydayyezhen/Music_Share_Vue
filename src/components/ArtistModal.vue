@@ -1,8 +1,9 @@
 <script setup>
 import { ref, watch} from 'vue'
-import { apiCreateArtist, apiUpdateArtist, apiUploadAvatarFile } from '@/api/artist-api.js'
+import {apiCreateArtist, apiDeleteAvatarFileById, apiUpdateArtist, apiUploadAvatarFile} from '@/api/artist-api.js'
 import { Artist } from '@/models/artist.js'
 import { apiGetArtistAvatarFileUrl } from '@/api/artist-api.js'
+import {apiDeleteCoverFileById} from "@/api/album-api.js";
 
 const props = defineProps({
   modelValue: Boolean,
@@ -55,6 +56,9 @@ const selectAvatar = (event) => {
 
 const upload = async () => {
   try {
+    if (props.mode === "edit" && currentArtist.value.avatarUrl) {
+      await apiDeleteAvatarFileById(currentArtist.value.id);
+    }
     if (props.mode === 'create') {
       const { data } = await apiCreateArtist(currentArtist.value)
       selectedAvatarFile.value && await apiUploadAvatarFile(data.id, selectedAvatarFile.value)
