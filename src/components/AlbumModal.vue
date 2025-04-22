@@ -8,7 +8,7 @@ import {
 import {
   apiCreateAlbum,
   apiUploadCoverFile,
-  apiUpdateAlbum
+  apiUpdateAlbum, apiDeleteCoverFileById
 } from "@/api/album-api.js";
 import {Album} from "@/models/album.js";
 import {Artist} from "@/models/artist.js";
@@ -85,24 +85,32 @@ const selectCover = (event) => {
 };
 
 const upload = async () => {
-  currentAlbum.value.artist.id = selectedArtist.value.id;
+    // 设置专辑关联的歌手 ID
+    currentAlbum.value.artist.id = selectedArtist.value.id;
 
-  if (props.mode === "create") {
-    const res = await apiCreateAlbum(currentAlbum.value);
-    if (selectedImgFile.value) {
-      await apiUploadCoverFile(res.data.id, selectedImgFile.value);
+    // 如果是编辑模式，并且存在旧封面，则先删除旧封面
+    if (props.mode === "edit" && currentAlbum.value.coverUrl) {
+      await apiDeleteCoverFileById(currentAlbum.value.id);
     }
-    emit("albumCreated", res.data);
-  } else {
-    await apiUpdateAlbum(currentAlbum.value);
-    if (selectedImgFile.value) {
-      await apiUploadCoverFile(currentAlbum.value.id, selectedImgFile.value);
-    }
-    emit("albumUpdated", currentAlbum.value);
-  }
 
-  alert("操作成功！");
-  visible.value = false;
+    // 创建或更新专辑
+    if (props.mode === "create") {
+      const res = await apiCreateAlbum(currentAlbum.value);
+      if (selectedImgFile.value) {
+        await apiUploadCoverFile(res.data.id, selectedImgFile.value);
+      }
+      emit("albumCreated", res.data);
+    } else {
+      await apiUpdateAlbum(currentAlbum.value);
+      if (selectedImgFile.value) {
+        await apiUploadCoverFile(currentAlbum.value.id, selectedImgFile.value);
+      }
+      emit("albumUpdated", currentAlbum.value);
+    }
+
+    alert("操作成功！");
+    visible.value = false;
+
 };
 
 const handleArtistCreated = async (newArtist) => {
