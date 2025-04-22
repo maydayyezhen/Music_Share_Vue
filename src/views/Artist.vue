@@ -35,18 +35,19 @@ const openEditArtistModal = (artist) => {
   artistModalVisible.value = true
 }
 
-const handleArtistUpdated = async (updatedArtist) => {
-  try {
-    const { data } = await apiGetArtistById(updatedArtist.id)
-    artist.value = data
-  } catch (err) {
-    console.error("更新后获取歌手信息失败", err)
-  }
-}
-
 const getSongsByArtistId = async (artistId) => {
   const response = await apiGetSongsByArtistId(artistId);
   songs.value = response.data;
+}
+
+const getArtistById = async (artistId) => {
+  const artistResponse = await apiGetArtistById(artistId);
+  artist.value = artistResponse.data;
+}
+
+const getAlbumByArtistId = async (artistId) => {
+  const albumsResponse = await apiGetAlbumsByArtistId(artistId);
+  albums.value = albumsResponse.data;
 }
 
 const goToAlbum = (albumId) => {
@@ -70,12 +71,21 @@ const deleteArtist = async (artist) => {
   }
 };
 
-onMounted(async () => {
-  const artistResponse = await apiGetArtistById(route.params.id);
-  artist.value = artistResponse.data;
-  const albumsResponse = await apiGetAlbumsByArtistId(route.params.id);
-  albums.value = albumsResponse.data;
+const artistAvatarKey = ref(Date.now());
+
+const refreshArtistAvatar = () => {
+  artistAvatarKey.value = Date.now()
+}
+
+const refreshAll = async () =>{
+  await getArtistById(route.params.id);
+  await getAlbumByArtistId(route.params.id);
   await getSongsByArtistId(route.params.id);
+  refreshArtistAvatar();
+}
+
+onMounted(async () => {
+  await refreshAll();
 })
 
 </script>
@@ -90,6 +100,7 @@ onMounted(async () => {
     <v-row align="center" class="mb-6">
       <v-col cols="12" md="4" class="text-center">
         <v-img
+            :key="artistAvatarKey"
             :src="apiGetArtistAvatarFileUrl(artist.avatarUrl)"
             alt="Artist Image"
             width="150"
@@ -186,7 +197,7 @@ onMounted(async () => {
       v-model="artistModalVisible"
       :artist-data="selectedArtist"
       :mode="editArtistMode"
-      @artist-updated="handleArtistUpdated"
+      @artist-updated="refreshAll"
   />
 </template>
 

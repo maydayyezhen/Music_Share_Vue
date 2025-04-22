@@ -5,16 +5,22 @@ import {Song} from "@/models/song.js";
 export const useMusicStore = defineStore('music', () => {
     const currentSongIndex = ref(0);
     const currentPlaylist = ref([]);
+    const currentAlbumUrlList = ref([]);
     const currentSong = ref({...Song});
     const audio = ref(null);
     const isPlaying = ref(false);
+    const currentSongCoverUrl = ref(null);
 
     const setCurrentPlayList = (playlist) => {
         currentPlaylist.value = JSON.parse(JSON.stringify(playlist))
     }
+    const setCurrentAlbumUrlList = (urlList) => {
+        currentAlbumUrlList.value = urlList;
+    }
     const setCurrentSong = (index) => {
         currentSongIndex.value = index;
         currentSong.value = currentPlaylist.value[index];
+        currentSongCoverUrl.value = currentAlbumUrlList.value[index];
     }
 
     const setAudio = (audioElement) => {
@@ -50,22 +56,26 @@ export const useMusicStore = defineStore('music', () => {
         if (currentSongIndex.value < currentPlaylist.value.length - 1) {
             currentSongIndex.value++;
             currentSong.value = currentPlaylist.value[currentSongIndex.value];
+            currentSongCoverUrl.value = currentAlbumUrlList.value[currentSongIndex.value];
         }
         else
         {
             currentSongIndex.value = 0;
             currentSong.value = currentPlaylist.value[0];
+            currentSongCoverUrl.value = currentAlbumUrlList.value[0];
         }
     }
     const previousSong = () => {
         if (currentSongIndex.value > 0) {
             currentSongIndex.value--;
             currentSong.value = currentPlaylist.value[currentSongIndex.value];
+            currentSongCoverUrl.value = currentAlbumUrlList.value[currentSongIndex.value];
         }
         else
         {
             currentSongIndex.value = currentPlaylist.value.length - 1;
             currentSong.value = currentPlaylist.value[currentSongIndex.value];
+            currentSongCoverUrl.value = currentAlbumUrlList.value[currentSongIndex.value];
         }
     }
     return {
@@ -81,6 +91,8 @@ export const useMusicStore = defineStore('music', () => {
       audio,
       play,
       pause,
-      isPlaying
+      isPlaying,
+      currentSongCoverUrl,
+      setCurrentAlbumUrlList, currentAlbumUrlList
     }
 });

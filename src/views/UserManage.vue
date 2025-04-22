@@ -1,17 +1,16 @@
 <script setup>
     import { ref, onMounted, computed } from 'vue';
     import { useAuthStore } from "@/stores/authStore.js";
-    import { useRouter } from 'vue-router';
     import { apiGetAllUsers, apiUpdateRole } from "@/api/user-api.js";
 
     const authStore = useAuthStore();
-    const router = useRouter();
 
     // 数据状态
     const users = ref([]);
     const loading = ref(false);
     const error = ref(null);
     const successMessage = ref(null);
+    const snackbar = ref(false);
 
     // 获取所有用户
     const fetchUsers = async () => {
@@ -23,6 +22,7 @@
         } catch (err) {
             error.value = '获取用户列表失败: ' + (err.response?.data?.message || err.message);
             users.value = [];
+            snackbar.value = true;
         } finally {
             loading.value = false;
         }
@@ -30,22 +30,17 @@
 
     // 更新用户角色
     const updateUserRole = async (username, newRole) => {
-        if (!confirm(`确定要将用户 ${username} 的角色修改为 ${newRole} 吗？`)) return;
-
         try {
             loading.value = true;
             await apiUpdateRole(authStore.user.username, username, newRole);
             successMessage.value = `用户 ${username} 的角色已成功更新为 ${newRole}`;
+            snackbar.value = true;
 
             // 刷新用户列表
             await fetchUsers();
-
-            // 3秒后自动清除成功消息
-            setTimeout(() => {
-                successMessage.value = null;
-            }, 3000);
         } catch (err) {
             error.value = '更新角色失败: ' + (err.response?.data?.message || err.message);
+            snackbar.value = true;
         } finally {
             loading.value = false;
         }
@@ -63,138 +58,77 @@
 </script>
 
 <template>
-    <div class="user-role-management">
-        <h2>用户角色管理</h2>
+    <v-container class="pa-4" max-width="1200">
+        <v-card class="pa-6" elevation="4" rounded="lg">
+            <v-card-title class="text-h4 text-center mb-6">
+                <v-icon large class="mr-2">mdi-account-cog</v-icon>
+                用户角色管理
+            </v-card-title>
 
-        <!-- 操作提示和状态信息 -->
-        <div v-if="successMessage" class="alert alert-success">
-            {{ successMessage }}
-        </div>
-        <div v-if="error" class="alert alert-error">
-            {{ error }}
-        </div>
+            <!-- 加载状态 -->
+            <v-progress-linear v-if="loading"
+                               indeterminate
+                               color="primary"
+                               class="mb-4"></v-progress-linear>
 
-        <!-- 加载状态 -->
-        <div v-if="loading" class="loading-indicator">
-            加载中...
-        </div>
+            <!-- 用户列表表格 -->
+            <v-data-table v-if="!loading && filteredUsers.length > 0"
+                          :headers="[
+          { title: '用户名', key: 'username' },
+          { title: '昵称', key: 'nickname' },
+          { title: '当前角色', key: 'role' },
+          { title: '操作', key: 'actions', sortable: false }
+        ]"
+                          :items="filteredUsers"
+                          class="elevation-1">
+                <template v-slot:item.nickname="{ item }">
+                    {{ item.nickname || 'N/A' }}
+                </template>
 
-        <!-- 用户列表表格 -->
-        <table v-else class="user-table">
-            <thead>
-                <tr>
-                    <th>用户名</th>
-                    <th>昵称</th>
-                    <th>当前角色</th>
-                    <th>操作</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr v-for="user in filteredUsers" :key="user.username">
-                    <td>{{ user.username }}</td>
-                    <td>{{ user.nickname || 'N/A' }}</td>
-                    <td>{{ user.role }}</td>
-                    <td class="actions">
-                        <select v-model="user.role"
-                                @change="updateUserRole(user.username, user.role)"
-                                class="role-select">
-                            <option value="user">普通用户</option>
-                            <option value="admin">管理员</option>
-                        </select>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+                <template v-slot:item.role="{ item }">
+                    <v-chip :color="item.role === 'admin' ? 'primary' : 'success'">
+                        {{ item.role === 'admin' ? '管理员' : '普通用户' }}
+                    </v-chip>
+                </template>
 
-        <div v-if="filteredUsers.length === 0" class="empty-message">
-            没有其他用户可管理
-        </div>
-    </div>
+                <template v-slot:item.actions="{ item }">
+                    <v-select v-model="item.role"
+                              :items="[
+              { title: '普通用户', value: 'user' },
+              { title: '管理员', value: 'admin' }
+            ]"
+                              density="compact"
+                              variant="outlined"
+                              @update:modelValue="updateUserRole(item.username, item.role)"
+                              hide-details
+                              style="max-width: 150px;"></v-select>
+                </template>
+            </v-data-table>
+
+            <!-- 空状态 -->
+            <v-alert v-if="!loading && filteredUsers.length === 0"
+                     type="info"
+                     variant="tonal"
+                     class="my-4">
+                没有其他用户可管理
+            </v-alert>
+        </v-card>
+
+        <!-- 消息提示 -->
+        <v-snackbar v-model="snackbar"
+                    :timeout="3000"
+                    :color="error ? 'error' : 'success'"
+                    location="top">
+            {{ error || successMessage }}
+            <template v-slot:actions>
+                <v-btn variant="text"
+                       @click="snackbar = false">
+                    关闭
+                </v-btn>
+            </template>
+        </v-snackbar>
+    </v-container>
 </template>
 
 <style scoped>
-    .user-role-management {
-        max-width: 900px;
-        margin: 0 auto;
-        padding: 20px;
-    }
-
-    h2 {
-        text-align: center;
-        margin-bottom: 20px;
-        color: #333;
-    }
-
-    .alert {
-        padding: 10px 15px;
-        border-radius: 4px;
-        margin-bottom: 20px;
-    }
-
-    .alert-success {
-        background-color: #d4edda;
-        color: #155724;
-        border: 1px solid #c3e6cb;
-    }
-
-    .alert-error {
-        background-color: #f8d7da;
-        color: #721c24;
-        border: 1px solid #f5c6cb;
-    }
-
-    .loading-indicator {
-        text-align: center;
-        padding: 20px;
-        color: #666;
-    }
-
-    .user-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 20px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
-
-        .user-table th,
-        .user-table td {
-            padding: 12px 15px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
-
-        .user-table th {
-            background-color: #f5f5f5;
-            font-weight: 600;
-        }
-
-        .user-table tr:hover {
-            background-color: #f9f9f9;
-        }
-
-    .actions {
-        min-width: 150px;
-    }
-
-    .role-select {
-        padding: 6px 10px;
-        border-radius: 4px;
-        border: 1px solid #ddd;
-        background-color: white;
-        cursor: pointer;
-        transition: all 0.3s;
-    }
-
-        .role-select:focus {
-            outline: none;
-            border-color: #4CAF50;
-            box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
-        }
-
-    .empty-message {
-        text-align: center;
-        padding: 20px;
-        color: #666;
-        font-style: italic;
-    }
 </style>

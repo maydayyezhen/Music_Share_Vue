@@ -1,25 +1,22 @@
 <script setup>
-import { onMounted, ref, watch } from "vue";
+import {nextTick, onMounted, ref, watch} from "vue";
 import ArtistModal from "@/components/ArtistModal.vue";
 import AlbumModal from "@/components/AlbumModal.vue";
-import {
-  apiGetAlbumsByArtistId,
-  apiGetAllAlbums,
-  apiGetCoverFileUrl
-} from "@/api/album-api.js";
-import {
-  apiGetAllArtists,
-  apiGetArtistAvatarFileUrl
-} from "@/api/artist-api.js";
-import {
-  apiCreateSong,
-  apiUpdateSong,
-  apiUploadAudioFile,
-  apiUploadLrcFile
-} from "@/api/song-api.js";
-import { Artist } from "@/models/artist.js";
-import { Album } from "@/models/album.js";
-import { Song } from "@/models/song.js";
+import {apiGetAlbumsByArtistId, apiGetAllAlbums, apiGetCoverFileUrl} from "@/api/album-api.js";
+import {apiGetAllArtists, apiGetArtistAvatarFileUrl} from "@/api/artist-api.js";
+import {apiCreateSong, apiUpdateSong, apiUploadAudioFile, apiUploadLrcFile} from "@/api/song-api.js";
+import {Artist} from "@/models/artist.js";
+import {Album} from "@/models/album.js";
+import {Song} from "@/models/song.js";
+import {submitMessageToApi} from "@/api/deepSeek-api.js";
+
+const messageBox = ref(null);
+const autoScroll = () => {
+  nextTick(() => {
+    const textarea = messageBox.value;
+    textarea.scrollTop = textarea.scrollHeight;
+  });
+};
 
 const props = defineProps({
   song: {
@@ -38,6 +35,30 @@ const artistSelect = ref(null)
 
 const newSongRef = ref({ ...Song })
 
+const aiMessage = ref(null)
+const aiGetting = ref(false)
+const aiDialog = ref(false)
+const buffer = ref('')
+const submitMessage = async () => {
+  const question = `根据以下歌词生成LRC文件。中文歌词不变，其他语言的歌词翻译成中文，并放在原歌词下一行。仅输出时间戳和歌词，不加其他信息。\n` + newSongRef.value.lyrics;
+  aiGetting.value = true
+  aiMessage.value = await submitMessageToApi(question, (chunk) => {
+    buffer.value += chunk
+    autoScroll();
+  })
+  const rawLyrics = aiMessage.value || '';
+
+// 拆成行
+  const lines = rawLyrics.split(/\r?\n/);
+
+// 只保留合法歌词行（形如 [00:00.00] xxx）
+  const lrcLines = lines.filter(line => /^\[\d{2}:\d{2}(?:\.\d{1,3})?\].+/.test(line));
+
+// 拼接成内容字符串
+  newSongRef.value.lyrics = lrcLines.join('\n');
+  aiGetting.value = false
+  aiDialog.value=false
+}
 const getAllArtists = async () => {
   const response = await apiGetAllArtists()
   artists.value = response.data
@@ -97,6 +118,19 @@ const selectLrcFile = (event) => {
   if (file) {
     selectedLrcFile.value = file
   }
+
+  // 创建 FileReader 对象
+  const reader = new FileReader();
+
+  // 读取文件内容
+  reader.onload = (e) => {
+    // 读取成功后将文件内容赋值到 fileContent
+    newSongRef.value.lyrics = e.target.result
+  };
+
+  // 读取文件为文本
+  reader.readAsText(file);
+
 }
 
 const formatDuration = (dur) => {
@@ -145,8 +179,17 @@ const upload = async () => {
     response = await apiCreateSong(newSongRef.value)
   }
 
-  if (selectedLrcFile.value) {
-    await apiUploadLrcFile(response.data.id, selectedLrcFile.value)
+  if (newSongRef.value.lyrics) {
+// 构造文件并上传
+    const lrcBlob = new Blob([newSongRef.value.lyrics], { type: 'text/plain' });
+    const lrcFile = new File(
+        [lrcBlob],
+        `${newSongRef.value.title}-${newSongRef.value.artist.name}.lrc`,
+        { type: 'text/plain' }
+    );
+
+    await apiUploadLrcFile(response.data.id, lrcFile);
+
   }
   if (selectedAudioFile.value) {
     await apiUploadAudioFile(response.data.id, selectedAudioFile.value)
@@ -297,6 +340,19 @@ const visible = defineModel('visible')
             accept=".lrc,.txt"
             @change="selectLrcFile"
         />
+
+        <v-btn @click="aiDialog=true">Lrc AI翻译</v-btn>
+        <v-dialog v-model="aiDialog" max-width="500px">
+          <v-card>
+            <v-card-text>
+              确认要进行AI翻译吗？
+              <v-btn @click="submitMessage()">确认</v-btn>
+              <v-btn @click="aiDialog=false">取消</v-btn>
+              <v-textarea v-model="buffer" @input="autoScroll" ref="messageBox"></v-textarea>
+            </v-card-text>
+          </v-card>
+        </v-dialog>
+        <v-label v-if="aiGetting">正在生成...</v-label>
 
         <v-textarea
             variant="outlined"

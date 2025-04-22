@@ -5,7 +5,6 @@ import { useAuthStore } from '@/stores/authStore';
 import router from "@/router/index.js";
 const authStore = useAuthStore();
 const dialogVisible = ref(false)
-const isOpen = ref(false);
 
 const selectItem = (item) => {
   console.log('选择了:', item);
@@ -58,9 +57,24 @@ const selectItem = (item) => {
       </v-btn>
 
       <!-- 菜单按钮 -->
-      <v-menu v-model="isOpen" offset-y>
+      <v-menu  offset-y>
         <template #activator="{ props }">
-          <v-btn v-bind="props" variant="text" class="nav-btn">菜单</v-btn>
+          <v-btn
+              icon
+              v-bind="props"
+              variant="text"
+              class="d-flex align-center justify-center"
+              style="padding: 0;"
+          >
+            <v-avatar size="32">
+              <v-img v-if="authStore.user.avatarUrl"
+                     :src="authStore.user.avatarUrl"
+                     height="50"
+                     width="50"
+                     cover></v-img>
+              <v-icon v-else size="50" color="grey">mdi-account-circle</v-icon>
+            </v-avatar>
+          </v-btn>
         </template>
         <v-list>
           <v-list-item @click="selectItem('我的信息')">
@@ -74,6 +88,10 @@ const selectItem = (item) => {
           </v-list-item>
         </v-list>
       </v-menu>
+      <span class="nav-btn text-white font-weight-medium mr-2">{{ authStore.user.nickname }}</span>
+
+
+
     </template>
 
     <!-- 未登录 -->

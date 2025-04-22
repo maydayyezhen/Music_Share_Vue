@@ -2,6 +2,7 @@
 import { ref, watch} from 'vue'
 import { apiCreateArtist, apiUpdateArtist, apiUploadAvatarFile } from '@/api/artist-api.js'
 import { Artist } from '@/models/artist.js'
+import { apiGetArtistAvatarFileUrl } from '@/api/artist-api.js'
 
 const props = defineProps({
   modelValue: Boolean,
@@ -31,7 +32,7 @@ watch(
     (newArtist) => {
       if (props.mode === 'edit' && newArtist) {
         currentArtist.value = { ...newArtist }
-        avatarUrl.value = newArtist.avatarUrl
+        avatarUrl.value = apiGetArtistAvatarFileUrl(newArtist.avatarUrl)
       } else {
         currentArtist.value = { ...Artist }
         avatarUrl.value = ''

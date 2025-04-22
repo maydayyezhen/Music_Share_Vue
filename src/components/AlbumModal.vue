@@ -176,7 +176,7 @@ const handleArtistCreated = async (newArtist) => {
 
     <artist-modal
         v-if="artistModalVisible"
-        v-model:visible="artistModalVisible"
+        v-model="artistModalVisible"
         @artist-created="handleArtistCreated"
     />
   </v-dialog>

@@ -6,7 +6,7 @@ import { Album } from "@/models/album.js"
 import { Song } from "@/models/song.js"
 
 import {apiGetCoverFileUrl} from "@/api/album-api.js"
-import {apiGetAllSongs, apiGetLyricFileUrl, apiGetSongById,apiGetAlbumBySongId} from "@/api/song-api.js"
+import {apiGetLyricFileUrl, apiGetSongById,apiGetAlbumBySongId} from "@/api/song-api.js"
 import {useMusicStore} from "@/stores/musicStore.js";
 import EditMusic from "@/components/SongModal.vue";
 
@@ -17,15 +17,9 @@ const activeTab = ref('playlist') // 当前选中的 tab
 const lyricsRef = ref(null)
 const lyrics = ref([]);
 const currentMusic = useMusicStore();
-const songs = ref([])
 const isSongModalVisible = ref(false)
 const selectedSong = ref(null) // 当前要编辑的歌曲
 
-
-const getSongById = async (songId) => {
-  const songResponse = await apiGetSongById(songId)
-  song.value = songResponse.data
-}
 
 const parseLRC = (lrcText) => {
   return lrcText
@@ -58,27 +52,13 @@ const togglePlayPause = (currentSong) => {
   }
   else {
     currentMusic.setCurrentPlayList([song.value]);
+    currentMusic.setCurrentAlbumUrlList([apiGetCoverFileUrl(album.value.coverUrl)]);
     currentMusic.setCurrentSong(0);
   }
 };
 
-onMounted(async () => {
-
-  const albumResponse = await apiGetAlbumBySongId(route.params.id)
-  album.value = albumResponse.data
-
-  await getSongById(route.params.id)
-
-  await loadLRC()
-})
-
 function changeTab(tab) {
   activeTab.value = tab
-}
-
-const fetchSongs = async () => {
-  const response = await apiGetAllSongs()
-  songs.value = response.data
 }
 
 
@@ -88,12 +68,32 @@ const openEditSongModal = (song) => {
   isSongModalVisible.value = true
 }
 
-// 当 modal 关闭时刷新
-const handleModalClose = () => {
-  fetchSongs()
+const getSongById = async (songId) => {
+  const songResponse = await apiGetSongById(songId)
+  song.value = songResponse.data
 }
 
-fetchSongs()
+const getAlbumBySongId = async (songId) => {
+  const albumResponse = await apiGetAlbumBySongId(songId)
+  album.value = albumResponse.data
+}
+
+const coverImageKey = ref(Date.now());
+
+const refreshCoverImage = () => {
+  coverImageKey.value = Date.now()
+}
+
+const refreshAll = async () =>{
+  await getSongById(route.params.id);
+  await getAlbumBySongId(route.params.id);
+  refreshCoverImage();
+  await loadLRC();
+}
+
+onMounted(async () => {
+  await refreshAll();
+})
 
 </script>
 
@@ -104,6 +104,7 @@ fetchSongs()
     <v-row align="center" class="mb-6" justify="center">
       <v-col cols="12" md="4" class="text-center">
         <v-img
+            :key="coverImageKey"
             :src="apiGetCoverFileUrl(album.coverUrl)"
             alt="专辑封面"
             class="mx-auto rounded-lg elevation-4"
@@ -182,7 +183,7 @@ fetchSongs()
     <EditMusic
         v-model:visible="isSongModalVisible"
         :song="selectedSong"
-        @close="handleModalClose"
+        @close="refreshAll"
     />
 
   </v-container>

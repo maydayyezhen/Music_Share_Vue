@@ -20,6 +20,7 @@ const emit = defineEmits(["reloadSongs"]);
 const songs = ref([])
 const isSongModalVisible = ref(false)
 const selectedSong = ref(null) // 当前要编辑的歌曲
+const coverUrls = ref({});
 
 const startEditSong = (song) => {
   editingSong.value = {...song};
@@ -54,7 +55,9 @@ const togglePlayPause = (currentSong) => {
   }
   else {
     currentMusic.setCurrentPlayList(props.songs);
-    currentMusic.setCurrentSong(props.songs.findIndex(song => song.id === currentSong.id));
+    currentMusic.setCurrentAlbumUrlList(coverUrls.value);
+    const index =props.songs.findIndex(song => song.id === currentSong.id)
+    currentMusic.setCurrentSong(index);
   }
 };
 
@@ -76,18 +79,17 @@ const goToSong = (songId) => {
   router.push(`/song/${songId}`)
 }
 
-const coverUrls = ref({});
 watch(
     () => props.songs,
     async (newSongs) => {
       if (!newSongs || newSongs.length === 0) return;
       const urlMap = {};
-      for (const song of newSongs) {
-        urlMap[song.id] = await apiGetCoverFileUrlBySongId(song.id);
+      for (const [index, song] of newSongs.entries()) {
+        urlMap[index] = await apiGetCoverFileUrlBySongId(song.id);
       }
       coverUrls.value = urlMap;
     },
-    { immediate: true } // 初始就触发一次
+{ immediate: true } // 初始就触发一次
 );
 
 const searchQuery = ref("");
@@ -130,7 +132,7 @@ const filteredItems = computed(() =>
         clearable
     />
     <!-- 歌曲列表 -->
-    <v-row v-for="song in filteredItems" :key="song.id" class="mb-3">
+    <v-row v-for="(song, index) in filteredItems" :key="index" class="mb-3">
       <v-col>
         <v-card class="compact-card">
 
@@ -138,7 +140,7 @@ const filteredItems = computed(() =>
             <!-- 封面图 -->
             <v-col cols="auto">
               <v-img
-                  :src="coverUrls[song.id]"
+                  :src="coverUrls[index]"
                   alt="歌曲封面"
                   width="80"
                   height="80"
