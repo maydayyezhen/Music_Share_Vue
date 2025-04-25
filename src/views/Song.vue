@@ -6,7 +6,7 @@ import { Album } from "@/models/album.js"
 import { Song } from "@/models/song.js"
 
 import {apiGetCoverFileUrl} from "@/api/album-api.js"
-import {apiGetLyricFileUrl, apiGetSongById,apiGetAlbumBySongId} from "@/api/song-api.js"
+import { apiGetSongById, apiGetAlbumBySongId, apiGetLyric} from "@/api/song-api.js"
 import {useMusicStore} from "@/stores/musicStore.js";
 import EditMusic from "@/components/SongModal.vue";
 
@@ -36,8 +36,7 @@ const parseLRC = (lrcText) => {
 }
 
 const loadLRC = async () => {
-  const res = await fetch(apiGetLyricFileUrl(song.value.lyricUrl));
-  const text = await res.text()
+  const text = await apiGetLyric(song.value.lyricUrl)
   lyrics.value = parseLRC(text)
 }
 

@@ -13,7 +13,7 @@ const musicStore = useMusicStore();
         <router-view /> <!-- 主要内容 -->
       </v-container>
     </v-main>
-    <v-footer app>
+    <v-footer app style="display: flex; justify-content: center; align-items: center;">
       <MusicPlayer @next-song="musicStore.nextSong" />
     </v-footer>
   </v-app>

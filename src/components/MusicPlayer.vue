@@ -1,6 +1,6 @@
 <script setup>
 import {useMusicStore} from "@/stores/musicStore.js";
-import {apiGetAudioFileUrl, apiGetLyricFileUrl} from "@/api/song-api.js";
+import {apiGetAudioFileUrl, apiGetLyric} from "@/api/song-api.js";
 import {onMounted, ref, watch} from "vue";
 import router from "@/router/index.js";
 const currentMusic = useMusicStore();
@@ -12,6 +12,7 @@ const showSheet = ref(false);
 const dialog = ref(false)
 const isManuallyScrolled = ref(false);
 const sliderTime = ref(0)
+
 
 let scrollTimeout = null; // 定义滚动定时器
 const onScroll = () => {
@@ -78,8 +79,7 @@ const parseLRC = (lrcText) => {
 
 const loadLRC = async () => {
   if (!currentMusic.currentSong.id) return;
-  const res = await fetch(apiGetLyricFileUrl(currentMusic.currentSong.lyricUrl));
-  const text = await res.text()
+  const text = await apiGetLyric(currentMusic.currentSong.lyricUrl)
   lyrics.value = parseLRC(text)
 }
 
@@ -140,6 +140,11 @@ const goToSong = (songId) => {
   }
 }
 
+const volumeTooltipText= ref('')
+const updateVolumeTooltipText = () => {
+  volumeTooltipText.value = audioRef.value.volume === 0 ? '静音' : `${Math.round(audioRef.value.volume * 100)}%`
+}
+
 onMounted(() => {
   currentMusic.setAudio(audioRef.value);
   loadLRC()
@@ -169,27 +174,57 @@ watch(() => currentMusic.currentSong.audioUrl, (newAudioUrl) => {
   <!-- 展开式播放器卡片 -->
   <v-card
       v-show="showSheet"
-      class="music-player pa-4 mt-6"
+      class="music-player text-white"
+      style="background: rgba(30, 30, 30, 0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);"
       elevation="3"
       rounded="lg"
-      width="100%"
+      width="40%"
   >
-    <!-- 播放器底部控制条 -->
-    <v-row align="center" class="mt-4">
-      <v-col cols="12" md="8" class="d-flex align-center justify-between">
-        <!-- 展开/折叠按钮 -->
+    <!-- 背景模糊封面 -->
+    <v-img
+        :src="currentMusic.currentSongCoverUrl"
+        class="blur-background"
+        cover
+        style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; filter: blur(15px); opacity: 0.3;"
+    />
+
+    <!-- 主内容布局 -->
+    <v-row no-gutters align="center" class="pa-3" style="position: relative; z-index: 1;">
+      <!-- 左侧封面 -->
+      <v-col cols="auto">
+        <v-img
+            :src="currentMusic.currentSongCoverUrl"
+            height="74"
+            width="74"
+            class="rounded-lg elevation-6"
+            cover
+            @click="goToAlbum(currentMusic.currentSong.album.id)"
+            style="cursor: pointer;"
+        />
+      </v-col>
+      <!-- 歌曲信息 -->
+      <v-col cols="auto" class="ml-4">
+        <v-card-title class="pa-0 text-h6">
+          {{ currentMusic.currentSong.title || '未知歌曲' }}
+        </v-card-title>
+        <v-card-subtitle class="pa-0 text-body-2">
+          {{ currentMusic.currentSong.artist.name || '未知歌手' }}
+        </v-card-subtitle>
+      </v-col>
+      <!-- 播放控制区 -->
+      <v-col cols="auto" class="d-flex align-center">
         <v-btn icon variant="text" @click="showSheetChange">
           <span class="material-symbols-outlined">more_up</span>
         </v-btn>
 
-        <!-- 右上角菜单按钮 -->
-        <v-menu location="top">
+        <!-- 播放列表菜单 -->
+        <v-menu location="top" offset-y>
           <template #activator="{ props }">
-            <v-btn color="primary" v-bind="props">
-              播放列表
+            <v-btn icon variant="text" v-bind="props">
+              <v-icon size="28">mdi-playlist-music</v-icon>
             </v-btn>
           </template>
-          <v-list>
+          <v-list class="text-white" style="background: rgba(30, 30, 30, 0.6); backdrop-filter: blur(10px); border-radius: 12px;">
             <v-list-item
                 v-for="thisSong in currentMusic.currentPlaylist"
                 :key="thisSong.id"
@@ -197,254 +232,81 @@ watch(() => currentMusic.currentSong.audioUrl, (newAudioUrl) => {
             >
               <v-list-item-title
                   :class="{
-                  'text-primary': thisSong.id === currentMusic.currentSong.id,
-                  'font-weight-bold': thisSong.id === currentMusic.currentSong.id,
-                  'font-weight-normal': thisSong.id !== currentMusic.currentSong.id
-                }"
+                'highlighted-title': thisSong.id === currentMusic.currentSong.id,
+                'text-white': thisSong.id !== currentMusic.currentSong.id
+              }"
               >
                 {{ thisSong.title }} - {{ thisSong.artist.name }}
               </v-list-item-title>
-
               <template #append>
-                <v-btn icon variant="text" @click="currentMusic.deleteSongFromPlaylist(currentMusic.currentPlaylist.findIndex(song => song.id === thisSong.id))">
-                  <span class="material-symbols-outlined">close</span>
+                <v-btn icon variant="text" size="small" @click.stop="currentMusic.deleteSongFromPlaylist(currentMusic.currentPlaylist.findIndex(song => song.id === thisSong.id))">
+                  <v-icon size="20">mdi-close</v-icon>
                 </v-btn>
               </template>
             </v-list-item>
           </v-list>
         </v-menu>
 
-        <!-- 上一首 -->
-        <v-btn icon variant="text" @click="previousSong">
-          <span class="material-symbols-outlined">skip_previous</span>
+        <!-- 控制按钮们 -->
+        <v-btn icon variant="text" size="small" @click="toggleRepeat"><v-icon size="28">mdi-repeat</v-icon></v-btn>
+        <v-btn icon variant="text" size="small" @click="previousSong"><v-icon size="28">mdi-skip-previous</v-icon></v-btn>
+        <v-btn icon variant="text" size="small" @click="playPause">
+          <v-icon size="28">{{ currentMusic.isPlaying ? 'mdi-pause' : 'mdi-play' }}</v-icon>
         </v-btn>
+        <v-btn icon variant="text" size="small" @click="nextSong"><v-icon size="28">mdi-skip-next</v-icon></v-btn>
 
-        <!-- 下一首 -->
-        <v-btn icon variant="text" @click="nextSong">
-          <span class="material-symbols-outlined">skip_next</span>
-        </v-btn>
+        <!-- 音量菜单 -->
+        <v-menu location="top">
+          <template #activator="{ props }">
+            <v-btn icon variant="text" v-bind="props">
+              <v-icon size="28">mdi-volume-high</v-icon>
+            </v-btn>
+          </template>
+          <v-card
+              class="volume-card"
+              style="background: rgba(30, 30, 30, 0.6); backdrop-filter: blur(10px); border-radius: 12px; display: flex; justify-content: center; align-items: center; width: 40px; height: 140px;"
+          >
+            <el-slider
+                v-model="audioRef.volume"
+                vertical
+                height="100px"
+                max="1"
+                step="0.01"
+                :style="{
+              '--el-slider-main-bg-color': '#00ffd5',
+              '--el-slider-button-bg-color': '#00ffd5',
+              '--el-slider-button-border-color': '#00ffd5'
+            }"
+            />
+          </v-card>
+        </v-menu>
+
+        <v-btn icon variant="text" size="small"><v-icon size="28">mdi-dots-vertical</v-icon></v-btn>
+        <v-btn icon variant="text" size="small" @click="dialog = true"><v-icon size="28">mdi-arrow-expand</v-icon></v-btn>
       </v-col>
-
-      <v-btn @click="dialog = true" color="primary">打开播放器</v-btn>
-
-      <!-- 全屏播放器对话框 -->
-      <v-dialog
-          v-model="dialog"
-          fullscreen
-          transition="dialog-bottom-transition"
-          scrollable
-          overlay-color="rgba(0, 0, 0, 0.6)"
-      >
-        <v-card style="background: rgba(30, 30, 30, 1); color: white; height: 100%;">
-
-          <!-- 模糊背景图 -->
-          <v-img
-              :src="currentMusic.currentSongCoverUrl"
-              class="blur-background"
-              cover
-              style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; filter: blur(15px); opacity: 0.3;"
-          />
-
-          <!-- 关闭按钮 -->
-          <v-btn icon color="white" variant="text" size="small" @click="dialog = false" style="position: absolute; top: 0; right: 0;">
-            <v-icon size="28">mdi-close</v-icon>
-          </v-btn>
-
-          <v-card-text class="d-flex flex-column align-center" style="height: 100%; padding: 16px 24px;">
-
-            <v-row class="mt-4">
-                <v-img
-                    :src="currentMusic.currentSongCoverUrl"
-                    alt="歌曲封面"
-                    class="rounded-lg elevation-6"
-                    height="200"
-                    width="200"
-                    cover
-                    style="cursor: pointer;"
-                    @click="goToAlbum(currentMusic.currentSong.album.id)"
-                >
-                </v-img>
-            </v-row>
-            <v-row>
-              <!-- 歌曲标题和歌手 -->
-              <div class="text-center mt-2" >
-                <div class="text-h6" style="cursor: pointer;font-size: 1.4rem; font-weight: bold;" @click="goToSong(currentMusic.currentSong.id)">
-                  {{ currentMusic.currentSong.title || '未知歌曲' }}
-                </div>
-                <div class="text-subtitle-1 mt-1" style="cursor: pointer;font-size: 1rem; color: #b0bec5;" @click="goToArtist(currentMusic.currentSong.artist.id)">
-                  {{ currentMusic.currentSong.artist.name || '未知歌手' }}
-                </div>
-              </div>
-            </v-row>
-            <v-row>
-              <!-- 歌词部分 -->
-              <v-sheet
-                  ref="lyricsRef"
-                  class="lyrics-container no-scrollbar"
-                  color="transparent"
-                  style="flex: 1 1 auto; overflow-y: auto; width: 100%; max-width: 600px; min-height: 464px; max-height: 464px; padding: 16px;display: flex; flex-direction: column; align-items: center;margin-top: 0.8% "
-                  @scroll="onScroll"
-              >
-                <div
-                    v-for="(line, index) in lyrics"
-                    :key="index"
-                    :class="['line px-2 py-1', { active: activeIndexes.includes(index) }]"
-                    style="transition: all 0.3s; font-size: 1rem;"
-                    @dblclick="onSheetClick(line.time)"
-                    :style="{ cursor: 'pointer', transition: 'background-color 0.2s' ,userSelect: 'none' }"
-
-                >
-                  {{ line.text }}
-                </div>
-              </v-sheet>
-            </v-row>
-            <v-row
-                justify="center"
-                align="center"
-                style="flex-wrap: wrap; gap: 16px; margin-top: 1.7%; margin-bottom: 0;"
-            >
-              <v-label v-if="audioRef.duration && audioRef.duration > 0">
-                {{ formatTime(sliderTime) }}
-              </v-label>
-              <v-label v-else>
-                00:00
-              </v-label>
-              <!-- 播放进度条 -->
-              <el-slider
-                  v-model="sliderTime"
-                  :max="audioRef.duration"
-                  :step="1"
-                  :show-tooltip="false"
-                  :style="{
-      width: '300px', /* 增大宽度，改善用户体验 */
-      '--el-slider-main-bg-color': '#00ffd5',
-      '--el-slider-button-bg-color': '#00ffd5',
-      '--el-slider-button-border-color': '#00ffd5',
-      '--el-slider-button-size': '12px'
-    }"
-                  @input="currentMusic.pause();audioRef.currentTime = sliderTime;"
-                  @change="currentMusic.play()"
-              />
-              <!-- 时间标签 -->
-              <v-label v-if="audioRef.duration && audioRef.duration > 0">
-                {{ formatTime(audioRef.duration) }}
-              </v-label>
-              <v-label v-else>
-                00:00
-              </v-label>
-            </v-row>
-            <v-row justify="center" align="center" style="flex-wrap: wrap; gap: 16px; margin-bottom: 2%; margin-top: 0.5%">
-              <v-menu location="top" style="max-width: 100px">
-                <template #activator="{ props }">
-                  <v-btn icon color="white" variant="text" size="small" v-bind="props">
-                    <v-icon size="28">mdi-playlist-music</v-icon>
-                  </v-btn>
-                </template>
-                <v-list
-                    style="background: rgba(30, 30, 30, 0.6);
-                    backdrop-filter: blur(10px);
-                    -webkit-backdrop-filter: blur(10px);
-                    border-radius: 12px;"
-                    class="text-white">
-
-                <v-list-item
-                      v-for="thisSong in currentMusic.currentPlaylist"
-                      :key="thisSong.id"
-                      @click="currentMusic.setCurrentSong(currentMusic.currentPlaylist.findIndex(song => song.id === thisSong.id))"
-                  >
-                  <v-list-item-title
-                      :class="{
-      'highlighted-title': thisSong.id === currentMusic.currentSong.id,
-      'text-white': thisSong.id !== currentMusic.currentSong.id
-    }"
-                  >
-                    {{ thisSong.title }} - {{ thisSong.artist.name }}
-                  </v-list-item-title>
-
-                    <template #append>
-                      <v-btn icon color="white" variant="text" size="small" @click="currentMusic.deleteSongFromPlaylist(currentMusic.currentPlaylist.findIndex(song => song.id === thisSong.id))">
-                        <v-icon size="20">mdi-close</v-icon>
-                      </v-btn>
-                    </template>
-                  </v-list-item>
-                </v-list>
-              </v-menu>
-              <v-btn icon color="white" variant="text"  size="small" @click="toggleRepeat">
-                <v-icon size="28">mdi-repeat</v-icon>
-              </v-btn>
-              <v-btn icon color="white" variant="text" size="small" @click="previousSong">
-                <v-icon size="28">mdi-skip-previous</v-icon>
-              </v-btn>
-              <v-btn icon color="white" variant="text" size="small" @click="playPause">
-                <v-icon v-if="!currentMusic.isPlaying" size="28">mdi-play</v-icon>
-                <v-icon v-else size="28">mdi-pause</v-icon>
-              </v-btn>
-              <v-btn icon color="white" variant="text" size="small" @click="nextSong">
-                <v-icon size="28">mdi-skip-next</v-icon>
-              </v-btn>
-              <v-menu location="top">
-                <template #activator="{ props }">
-                  <v-btn icon color="white" variant="text" size="small" v-bind="props">
-                    <v-icon size="28">mdi-volume-high</v-icon>
-                  </v-btn>
-                </template>
-                <v-card
-                    elevation="5"
-                    class="volume-card"
-                    style="
-    background: rgba(30, 30, 30, 0.6);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border-radius: 12px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 40px;
-    height: 140px;
-  "
-                >
-                  <el-slider
-                      v-model="audioRef.volume"
-                      max="1"
-                      step="0.01"
-                      vertical
-                      height="100px"
-                      :show-tooltip="false"
-                      :style="{
-      '--el-slider-main-bg-color': '#00ffd5',
-      '--el-slider-button-bg-color': '#00ffd5',
-      '--el-slider-button-border-color': '#00ffd5'
-    }"
-                  />
-                </v-card>
-
-
-              </v-menu>
-              <v-btn icon color="white" variant="text" size="small">
-                <v-icon size="28">mdi-dots-vertical</v-icon>
-              </v-btn>
-            </v-row>
-          </v-card-text>
-        </v-card>
-      </v-dialog>
-
-
-
-
-
-      <!-- 音频播放控件 -->
-      <v-col cols="12" md="4" class="text-md-end text-center">
-        <audio
-            ref="audioRef"
-            controls
-            @timeupdate="onTimeUpdate"
-            @play="currentMusic.isPlaying=true"
-            @pause="currentMusic.isPlaying=false"
-            style="width: 100%; max-width: 300px;"
-        ></audio>
-      </v-col>
+      <v-card-actions class="px-4 pb-2"  style="z-index: 2; position: relative; width: 60%; margin: 0 auto;">
+        <el-slider
+            v-if="audioRef"
+            v-model="sliderTime"
+            :max="audioRef.duration"
+            :step="1"
+            :show-tooltip="false"
+            @input="currentMusic.pause(); audioRef.currentTime = sliderTime;"
+            @change="currentMusic.play()"
+            :style="{
+        '--el-slider-main-bg-color': '#00ffd5',
+        '--el-slider-button-bg-color': '#00ffd5',
+        '--el-slider-button-border-color': '#00ffd5',
+        '--el-slider-button-size': '12px'
+      }"
+        />
+      </v-card-actions>
     </v-row>
+
+    <!-- 底部时间轴 -->
+
   </v-card>
+
 
   <!-- 小播放器按钮 -->
   <v-btn
@@ -467,6 +329,216 @@ watch(() => currentMusic.currentSong.audioUrl, (newAudioUrl) => {
     </div>
 
   </v-btn>
+
+  <!-- 全屏播放器对话框 -->
+  <v-dialog
+      v-model="dialog"
+      fullscreen
+      transition="dialog-bottom-transition"
+      scrollable
+      overlay-color="rgba(0, 0, 0, 0.6)"
+  >
+    <v-card style="background: rgba(30, 30, 30, 1); color: white; height: 100%;">
+
+      <!-- 模糊背景图 -->
+      <v-img
+          :src="currentMusic.currentSongCoverUrl"
+          class="blur-background"
+          cover
+          style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; filter: blur(15px); opacity: 0.3;"
+      />
+
+      <!-- 关闭按钮 -->
+      <v-btn icon color="white" variant="text" size="small" @click="dialog = false" style="position: absolute; top: 0; right: 0;">
+        <v-icon size="28">mdi-arrow-collapse</v-icon>
+      </v-btn>
+
+      <v-card-text class="d-flex flex-column align-center" style="height: 100%; padding: 16px 24px;">
+
+        <v-row class="mt-4">
+          <v-img
+              :src="currentMusic.currentSongCoverUrl"
+              alt="歌曲封面"
+              class="rounded-lg elevation-6"
+              height="200"
+              width="200"
+              cover
+              style="cursor: pointer;"
+              @click="goToAlbum(currentMusic.currentSong.album.id)"
+          >
+          </v-img>
+        </v-row>
+        <v-row>
+          <!-- 歌曲标题和歌手 -->
+          <div class="text-center mt-2" >
+            <div class="text-h6" style="cursor: pointer;font-size: 1.4rem; font-weight: bold;" @click="goToSong(currentMusic.currentSong.id)">
+              {{ currentMusic.currentSong.title || '未知歌曲' }}
+            </div>
+            <div class="text-subtitle-1 mt-1" style="cursor: pointer;font-size: 1rem; color: #b0bec5;" @click="goToArtist(currentMusic.currentSong.artist.id)">
+              {{ currentMusic.currentSong.artist.name || '未知歌手' }}
+            </div>
+          </div>
+        </v-row>
+        <v-row>
+          <!-- 歌词部分 -->
+          <v-sheet
+              ref="lyricsRef"
+              class="lyrics-container no-scrollbar"
+              color="transparent"
+              style="flex: 1 1 auto; overflow-y: auto; width: 100%; max-width: 600px; min-height: 464px; max-height: 464px; padding: 16px;display: flex; flex-direction: column; align-items: center;margin-top: 0.8% "
+              @scroll="onScroll"
+          >
+            <div
+                v-for="(line, index) in lyrics"
+                :key="index"
+                :class="['line px-2 py-1', { active: activeIndexes.includes(index) }]"
+                style="transition: all 0.3s; font-size: 1rem;"
+                @dblclick="onSheetClick(line.time)"
+                :style="{ cursor: 'pointer', transition: 'background-color 0.2s' ,userSelect: 'none' }"
+
+            >
+              {{ line.text }}
+            </div>
+          </v-sheet>
+        </v-row>
+        <v-row
+            justify="center"
+            align="center"
+            style="flex-wrap: wrap; gap: 16px; margin-top: 1.7%; margin-bottom: 0;"
+        >
+          <v-label v-if="audioRef.duration && audioRef.duration > 0">
+            {{ formatTime(sliderTime) }}
+          </v-label>
+          <v-label v-else>
+            00:00
+          </v-label>
+          <!-- 播放进度条 -->
+          <el-slider
+              v-model="sliderTime"
+              :max="audioRef.duration"
+              :step="1"
+              :show-tooltip="false"
+              :style="{
+      width: '300px', /* 增大宽度，改善用户体验 */
+      '--el-slider-main-bg-color': '#00ffd5',
+      '--el-slider-button-bg-color': '#00ffd5',
+      '--el-slider-button-border-color': '#00ffd5',
+      '--el-slider-button-size': '12px'
+    }"
+              @input="currentMusic.pause();audioRef.currentTime = sliderTime;"
+              @change="currentMusic.play()"
+          />
+          <!-- 时间标签 -->
+          <v-label v-if="audioRef.duration && audioRef.duration > 0">
+            {{ formatTime(audioRef.duration) }}
+          </v-label>
+          <v-label v-else>
+            00:00
+          </v-label>
+        </v-row>
+        <v-row justify="center" align="center" style="flex-wrap: wrap; gap: 16px; margin-bottom: 2%; margin-top: 0.5%">
+          <v-menu location="top" style="max-width: 100px">
+            <template #activator="{ props }">
+              <v-btn icon color="white" variant="text" size="small" v-bind="props">
+                <v-icon size="28">mdi-playlist-music</v-icon>
+              </v-btn>
+            </template>
+            <v-list
+                style="background: rgba(30, 30, 30, 0.6);
+                    backdrop-filter: blur(10px);
+                    -webkit-backdrop-filter: blur(10px);
+                    border-radius: 12px;"
+                class="text-white">
+
+              <v-list-item
+                  v-for="thisSong in currentMusic.currentPlaylist"
+                  :key="thisSong.id"
+                  @click="currentMusic.setCurrentSong(currentMusic.currentPlaylist.findIndex(song => song.id === thisSong.id))"
+              >
+                <v-list-item-title
+                    :class="{
+      'highlighted-title': thisSong.id === currentMusic.currentSong.id,
+      'text-white': thisSong.id !== currentMusic.currentSong.id
+    }"
+                >
+                  {{ thisSong.title }} - {{ thisSong.artist.name }}
+                </v-list-item-title>
+
+                <template #append>
+                  <v-btn icon color="white" variant="text" size="small" @click="currentMusic.deleteSongFromPlaylist(currentMusic.currentPlaylist.findIndex(song => song.id === thisSong.id))">
+                    <v-icon size="20">mdi-close</v-icon>
+                  </v-btn>
+                </template>
+              </v-list-item>
+            </v-list>
+          </v-menu>
+          <v-btn icon color="white" variant="text"  size="small" @click="toggleRepeat">
+            <v-icon size="28">mdi-repeat</v-icon>
+          </v-btn>
+          <v-btn icon color="white" variant="text" size="small" @click="previousSong">
+            <v-icon size="28">mdi-skip-previous</v-icon>
+          </v-btn>
+          <v-btn icon color="white" variant="text" size="small" @click="playPause">
+            <v-icon v-if="!currentMusic.isPlaying" size="28">mdi-play</v-icon>
+            <v-icon v-else size="28">mdi-pause</v-icon>
+          </v-btn>
+          <v-btn icon color="white" variant="text" size="small" @click="nextSong">
+            <v-icon size="28">mdi-skip-next</v-icon>
+          </v-btn>
+          <v-menu location="top">
+            <template #activator="{ props }">
+              <v-btn icon color="white" variant="text" size="small" v-bind="props">
+                <v-icon size="28">mdi-volume-high</v-icon>
+              </v-btn>
+            </template>
+            <v-card
+                elevation="5"
+                class="volume-card"
+                style="
+    background: rgba(30, 30, 30, 0.6);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 40px;
+    height: 140px;
+  "
+            >
+              <el-slider
+                  v-model="audioRef.volume"
+                  max="1"
+                  step="0.01"
+                  vertical
+                  height="100px"
+                  :teleport="true"
+                  :style="{
+        '--el-slider-main-bg-color': '#00ffd5',
+        '--el-slider-button-bg-color': '#00ffd5',
+        '--el-slider-button-border-color': '#00ffd5'
+      }"
+                  v-tooltip="volumeTooltipText"
+                  @input="updateVolumeTooltipText"
+              />
+            </v-card>
+
+
+          </v-menu>
+          <v-btn icon color="white" variant="text" size="small">
+            <v-icon size="28">mdi-dots-vertical</v-icon>
+          </v-btn>
+        </v-row>
+      </v-card-text>
+    </v-card>
+  </v-dialog>
+  <audio
+      ref="audioRef"
+      @timeupdate="onTimeUpdate"
+      @play="currentMusic.isPlaying=true"
+      @pause="currentMusic.isPlaying=false"
+      style="width: 100%; max-width: 300px;"
+  ></audio>
 </template>
 
 

@@ -2,7 +2,7 @@
 import {ref} from 'vue'
 import router from "@/router/index.js";
 import { useAuthStore } from '@/stores/authStore';
-import {apiCreateUser, apiGetUserByUsername} from "@/api/user-api.js";
+import {apiGetUserByUsername, apiLogin, apiRegister} from "@/api/user-api.js";
 import {User} from "@/models/user.js";
 
 const authStore = useAuthStore();
@@ -11,49 +11,43 @@ const visible = defineModel('visible')
 
 const username = ref('');
 const password = ref('');
-
-const newUser = ref({...User});
 const registered = ref(false);
 
 const setRegister = () => {
   registered.value = !registered.value;
 }
 const register = async () => {
-    const response = await apiGetUserByUsername(username.value);
-  if (Object.keys(response.data).length > 0) {
-      alert('用户名已存在');
+  try {
+    const response = await apiRegister(username.value, password.value);
+    alert(response.data);
+  } catch (error) {
+    if (error.response && error.response.data) {
+      alert(error.response.data);
+    } else {
+      alert("注册失败，请稍后重试");
     }
-    else{
-      newUser.value.username = username.value;
-      newUser.value.password = password.value;
-      newUser.value.nickname = username.value;
-      const response = await apiCreateUser(newUser.value);
-      if( response.status === 200){
-        alert('注册成功');
-      }
-      setRegister();
-    }
-
-}
+  }
+};
 
 const login = async () => {
-  const response = await apiGetUserByUsername(username.value);
-  const user = response.data;
-
-  if (Object.keys(user).length > 0) {
-    if (user.password === password.value) {
-      alert('登录成功');
-      authStore.login();
-      authStore.saveUser(user);
-      username.value ='';
-      password.value = '';
-      visible.value = false;
-      await router.push(`/${user.role}`);
+  try{
+    const response = await apiLogin(username.value, password.value);
+    alert(response.data);
+    const dataResponse = await apiGetUserByUsername(username.value);
+    const user = dataResponse.data;
+    authStore.login();
+    authStore.saveUser(user);
+    username.value ='';
+    password.value = '';
+    visible.value = false;
+    await router.push(`/${user.role}`);
+  }
+  catch (error) {
+    if (error.response && error.response.data) {
+      alert(error.response.data);
     } else {
-      alert('密码错误');
+      alert("登录失败，请稍后重试");
     }
-  } else {
-    alert('用户名不存在');
   }
 }
 </script>

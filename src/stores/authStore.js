@@ -3,7 +3,7 @@ import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import {useRouter} from "vue-router";
 import {User} from "@/models/user.js";
-import { apiGetUserByUsername } from "@/api/user-api.js";
+import {apiGetUserByUsername, apiLogout} from "@/api/user-api.js";
 
 export const useAuthStore = defineStore('auth', () => {
     const isLoggedIn = ref(localStorage.getItem('isLoggedIn') === 'true');
@@ -30,12 +30,15 @@ export const useAuthStore = defineStore('auth', () => {
         localStorage.setItem('isLoggedIn', isLoggedIn.value);
         console.log(isLoggedIn.value);
     };
-    const logout = () => {
+    const logout = async () => {
         // 退出后跳转到首页
         isLoggedIn.value = false;
         // 清理 localStorage 中的所有用户数据
-        ['isLoggedIn','role','section','user'].forEach(item => localStorage.removeItem(item));
-        router.push('/').catch(() => {});
+        ['isLoggedIn', 'role', 'section', 'user'].forEach(item => localStorage.removeItem(item));
+        const response = await apiLogout()
+        alert(response.data);
+        router.push('/').catch(() => {
+        });
     };
     const fetchUser = async (name) => {
         try {
