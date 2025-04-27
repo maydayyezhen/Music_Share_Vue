@@ -3,17 +3,22 @@ import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import {useRouter} from "vue-router";
 import {User} from "@/models/user.js";
-import {apiGetUserByUsername, apiLogout} from "@/api/user-api.js";
+import {apiGetUserByUsername, apiLogin, apiLogout} from "@/api/user-api.js";
 
 export const useAuthStore = defineStore('auth', () => {
-    const isLoggedIn = ref(localStorage.getItem('isLoggedIn') === 'true');
-    const section = ref(localStorage.getItem('section') || '');
+    const currentUser = ref(localStorage.getItem('current_user') || '');
+    const isLoggedIn = ref(!!localStorage.getItem(`token_${currentUser.value}`)|| false);
+    const section = ref(localStorage.getItem(`section_${currentUser.value}`) || '');
     const router = useRouter();
-    const user = ref(JSON.parse(localStorage.getItem('user')) || {...User});
+
+    const user = ref(
+        JSON.parse(localStorage.getItem(`user_${currentUser.value}`)) || { ...User }
+    );
+
 
     const setSection = (newSection) => {
         section.value = newSection;
-        localStorage.setItem('section', section.value);
+        localStorage.setItem(`section_${user.value.username}`, section.value);
         if (section.value === 'my_music') {
             router.push('/my_music').catch(() => {});
         }
@@ -25,35 +30,50 @@ export const useAuthStore = defineStore('auth', () => {
         }
     }
 
-    const login = () => {
+    const login = async (username, password) => {
+        const token = await apiLogin(username, password)
+        localStorage.setItem(`token_${username}`, token);
+        currentUser.value = username;
+        localStorage.setItem("current_user", currentUser.value);
+        const dataResponse = await apiGetUserByUsername(username);
+        const user = dataResponse.data;
+        saveUser(user);
         isLoggedIn.value = true;
-        localStorage.setItem('isLoggedIn', isLoggedIn.value);
-        console.log(isLoggedIn.value);
+        alert("登录成功！");
     };
-    const logout = async () => {
-        // 退出后跳转到首页
+    const logout = async (isNormalLogout) => {
+        if (isNormalLogout) {
+            try {
+                const response = await apiLogout();
+                alert(response.data);
+            } catch (e) {
+                console.error('登出失败', e);
+            }
+        }
+        [`token_${user.value.username}`, `section_${user.value.username}`, `user_${user.value.username}`].forEach(item => localStorage.removeItem(item));
         isLoggedIn.value = false;
-        // 清理 localStorage 中的所有用户数据
-        ['isLoggedIn', 'role', 'section', 'user'].forEach(item => localStorage.removeItem(item));
-        const response = await apiLogout()
-        alert(response.data);
-        router.push('/').catch(() => {
-        });
+        if(currentUser === localStorage.getItem('current_user'))
+        {
+            currentUser.value = null;
+            localStorage.removeItem("current_user");
+        }
+        router.push('/').catch(() => {});
     };
+
     const fetchUser = async (name) => {
         try {
             const response = await apiGetUserByUsername(name);
-            console.log('API响应:', response); 
-            user.value = response.data; 
-            saveUser(user.value); 
+            console.log('API响应:', response);
+            user.value = response.data;
+            saveUser(user.value);
         } catch (error) {
             console.error('获取用户数据失败:', error);
-            throw error; 
+            throw error;
         }
     }
     const saveUser = (newUser) => {
         user.value = newUser;
-        localStorage.setItem('user', JSON.stringify(user.value));
+        localStorage.setItem(`user_${user.value.username}`, JSON.stringify(user.value));
     }
-    return { isLoggedIn, login, logout, section, setSection, user, fetchUser, saveUser };
+    return { isLoggedIn, login, logout, section, setSection, user, fetchUser, saveUser,currentUser};
 });

@@ -1,27 +1,47 @@
 // src/api/axiosInstance.js
 import axios from 'axios';
 import {useAuthStore} from "@/stores/authStore.js";
+import router from "@/router/index.js";
 
 const API_BASE_URL = 'http://localhost:8080'; // 你后端的地址
 
 const axiosInstance = axios.create({
-    baseURL: API_BASE_URL,
-    withCredentials: true,
+    baseURL: API_BASE_URL
 });
 
-// 响应拦截器，处理登录过期、未登录
-axiosInstance.interceptors.response.use(
-    response => response,
-    error => {
-        if (error.response && error.response.status === 401) {
-            // 登录过期或未登录，跳转到登录页
-            console.warn('未登录或登录过期，跳转到登录页');
-            // 清除前端存储的登录状态（比如 Vuex 或 localStorage）
-            const authStore = useAuthStore();
-            authStore.logout(); // 清除登录状态（比如 token、用户信息）
+// 添加请求拦截器，自动附带 token
+axiosInstance.interceptors.request.use(
+    (config) => {
+        const authStore = useAuthStore();
+        const currentUser = authStore.currentUser;
+        if (currentUser) {
+            const token = localStorage.getItem(`token_${currentUser}`);
+            if (token) {
+                config.headers['Authorization'] = `Bearer ${token}`;
+            }
         }
+
+        return config;
+    },
+    (error) => Promise.reject(error)
+);
+
+axiosInstance.interceptors.response.use(
+    response => response, // 正常响应直接返回
+    async error => {
+        const authStore = useAuthStore();
+
+        // 如果是 401 错误，且包含登录过期提示
+        if (error.response && error.response.status === 401) {
+            alert('登录已过期，请重新登录');
+            await authStore.logout(false);
+
+        }
+
         return Promise.reject(error);
     }
 );
+
+
 
 export default axiosInstance;

@@ -49,6 +49,9 @@ export const apiDeleteCoverFileById = (id) => {
 }
 
 //获取封面URL
-export const apiGetCoverFileUrl = (fileUrl) => {
-    return apiGetFileUrl(fileUrl);
+export const apiGetCoverFileUrl = async (fileUrl) => {
+    const res = await axios.get(fileUrl, {
+        responseType: 'blob',
+    })
+    return URL.createObjectURL(res.data)
 }

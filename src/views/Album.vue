@@ -63,8 +63,10 @@ const refreshSongList = () => {
 const refreshCoverImage = () => {
   coverImageKey.value = Date.now()
 }
+const albumCoverUrl = ref('')
 const refreshAll = async () => {
   await getAlbumById(route.params.id);
+  albumCoverUrl.value = await apiGetCoverFileUrl(album.value.coverUrl);
   await getSongsByAlbumId(route.params.id);
   refreshCoverImage();
   refreshSongList();
@@ -83,7 +85,7 @@ onMounted(async () => {
       <v-col cols="12" md="4" class="text-center">
         <v-img
             :key="coverImageKey"
-            :src="apiGetCoverFileUrl(album.coverUrl)"
+            :src="albumCoverUrl"
             alt="专辑封面"
             class="mx-auto rounded-lg elevation-4"
             height="200"

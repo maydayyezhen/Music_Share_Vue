@@ -145,23 +145,22 @@ const updateVolumeTooltipText = () => {
   volumeTooltipText.value = audioRef.value.volume === 0 ? '静音' : `${Math.round(audioRef.value.volume * 100)}%`
 }
 
-onMounted(() => {
+onMounted(async () => {
   currentMusic.setAudio(audioRef.value);
   loadLRC()
-  if(currentMusic.currentSong.id)
-  audioRef.value.src = apiGetAudioFileUrl(currentMusic.currentSong.audioUrl);
+  if (currentMusic.currentSong.id)
+    audioRef.value.src = await apiGetAudioFileUrl(currentMusic.currentSong.audioUrl);
   if (audioRef.value) {
     audioRef.value.addEventListener('ended', nextSong)
   }
 })
 
-watch(() => currentMusic.currentSong.audioUrl, (newAudioUrl) => {
+watch(() => currentMusic.currentSong.audioUrl, async (newAudioUrl) => {
   if (newAudioUrl) {
     loadLRC()
-    audioRef.value.src = apiGetAudioFileUrl(newAudioUrl)
+    audioRef.value.src = await apiGetAudioFileUrl(newAudioUrl)
     currentMusic.play();
-  }
-  else {
+  } else {
     currentMusic.pause();
     audioRef.value.src = ''
     lyrics.value = [];

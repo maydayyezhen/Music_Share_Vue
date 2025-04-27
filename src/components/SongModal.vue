@@ -203,8 +203,20 @@ const upload = async () => {
 const artistModalVisible = ref(false)
 const createDialogVisible = ref(false)
 
-onMounted(getAllArtists)
-onMounted(getAllAlbums)
+const artistAvatarUrls = ref([])
+const albumCoverUrls = ref([])
+
+
+onMounted(async () => {
+  await getAllArtists()
+  for (let i = 0; i < artists.value.length; i++) {
+    artistAvatarUrls.value[artists.value[i].id] = await apiGetArtistAvatarFileUrl(artists.value[i].avatarUrl)
+  }
+  await getAllAlbums()
+  for (let i = 0; i < albums.value.length; i++) {
+    albumCoverUrls.value[albums.value[i].id] = await apiGetCoverFileUrl(albums.value[i].coverUrl)
+  }
+});
 
 const visible = defineModel('visible')
 </script>
@@ -262,7 +274,7 @@ const visible = defineModel('visible')
                 <v-list-item v-bind="props">
                   <template v-slot:prepend>
                     <v-avatar size="30" class="mr-2">
-                      <v-img :src="apiGetArtistAvatarFileUrl(item.raw.avatarUrl)" />
+                      <v-img :src="artistAvatarUrls[item.raw.id]" />
                     </v-avatar>
                   </template>
                   <template v-slot:title>{{ item.raw.name }}</template>
@@ -270,7 +282,7 @@ const visible = defineModel('visible')
               </template>
               <template v-slot:selection="{ item }">
                 <v-avatar size="30" class="mr-2">
-                  <v-img :src="apiGetArtistAvatarFileUrl(item.raw.avatarUrl)" />
+                  <v-img :src="artistAvatarUrls[item.raw.id]" />
                 </v-avatar>
                 {{ item.raw.name }}
               </template>
@@ -299,7 +311,7 @@ const visible = defineModel('visible')
                 <v-list-item v-bind="props">
                   <template v-slot:prepend>
                     <v-avatar size="30" class="mr-2" :rounded="0">
-                      <v-img :src="apiGetCoverFileUrl(item.raw.coverUrl)" />
+                      <v-img :src="albumCoverUrls[item.raw.id]" />
                     </v-avatar>
                   </template>
                   <template v-slot:title>{{ item.raw.title }}</template>
@@ -307,7 +319,7 @@ const visible = defineModel('visible')
               </template>
               <template v-slot:selection="{ item }">
                 <v-avatar size="30" class="mr-2" :rounded="0">
-                  <v-img :src="apiGetCoverFileUrl(item.raw.coverUrl)" />
+                  <v-img :src="albumCoverUrls[item.raw.id]" />
                 </v-avatar>
                 {{ item.raw.title }}
               </template>

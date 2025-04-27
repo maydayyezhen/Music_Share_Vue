@@ -44,6 +44,8 @@ const deleteSong = async (song) => {
   emit("reloadSongs");
 }
 
+const urlMap = ref({})
+
 const togglePlayPause = (currentSong) => {
   if(currentMusic.currentSong.id === currentSong.id) {
     if(currentMusic.isPlaying) {
@@ -83,11 +85,10 @@ watch(
     () => props.songs,
     async (newSongs) => {
       if (!newSongs || newSongs.length === 0) return;
-      const urlMap = {};
       for (const [index, song] of newSongs.entries()) {
-        urlMap[index] = await apiGetCoverFileUrlBySongId(song.id);
+        urlMap.value[index] = await apiGetCoverFileUrlBySongId(song.id);
       }
-      coverUrls.value = urlMap;
+      coverUrls.value = urlMap.value;
     },
 { immediate: true } // 初始就触发一次
 );

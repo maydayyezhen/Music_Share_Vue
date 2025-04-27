@@ -45,18 +45,18 @@ const getAllArtists = async () => {
   artists.value = response.data;
 };
 
-onMounted(getAllArtists)
+
 
 watch(
     () => props.albumData,
-    (newAlbum) => {
+    async (newAlbum) => {
       if (props.mode === 'edit' && newAlbum) {
-        currentAlbum.value = { ...newAlbum }
+        currentAlbum.value = {...newAlbum}
         selectedArtist.value = newAlbum.artist
-        imgUrl.value = apiGetArtistAvatarFileUrl(newAlbum.coverUrl)
+        imgUrl.value = await apiGetArtistAvatarFileUrl(newAlbum.coverUrl)
       } else {
-        currentAlbum.value = { ...Album }
-        selectedArtist.value = { ...Artist }
+        currentAlbum.value = {...Album}
+        selectedArtist.value = {...Artist}
         imgUrl.value = ''
       }
     },
@@ -117,6 +117,15 @@ const handleArtistCreated = async (newArtist) => {
   await getAllArtists();
   selectedArtist.value = artists.value.find(a => a.id === newArtist.id);
 };
+
+const artistAvatarUrls = ref([]);
+onMounted(async () => {
+  await getAllArtists();
+  for(let i = 0; i < artists.value.length; i++) {
+    artistAvatarUrls.value[artists.value[i].id] = await apiGetArtistAvatarFileUrl(artists.value[i].avatarUrl);
+  }
+})
+
 </script>
 
 <template>
@@ -160,7 +169,7 @@ const handleArtistCreated = async (newArtist) => {
 
         <div v-if="selectedArtist?.id" class="my-4 text-center">
           <v-img
-              :src="apiGetArtistAvatarFileUrl(selectedArtist.avatarUrl)"
+              :src="artistAvatarUrls[selectedArtist.id]"
               width="100"
               height="100"
               cover

@@ -77,9 +77,15 @@ const refreshArtistAvatar = () => {
   artistAvatarKey.value = Date.now()
 }
 
+const artistAvatarUrl = ref('');
+const albumCoverUrl = ref([]);
 const refreshAll = async () =>{
   await getArtistById(route.params.id);
+  artistAvatarUrl.value = await apiGetArtistAvatarFileUrl(artist.value.avatarUrl)
   await getAlbumByArtistId(route.params.id);
+  for (let i = 0; i < albums.value.length; i++) {
+    albumCoverUrl.value[albums.value[i].id] = await apiGetCoverFileUrl(albums.value[i].coverUrl)
+  }
   await getSongsByArtistId(route.params.id);
   refreshArtistAvatar();
 }
@@ -101,7 +107,7 @@ onMounted(async () => {
       <v-col cols="12" md="4" class="text-center">
         <v-img
             :key="artistAvatarKey"
-            :src="apiGetArtistAvatarFileUrl(artist.avatarUrl)"
+            :src="artistAvatarUrl"
             alt="Artist Image"
             width="150"
             height="150"
@@ -168,7 +174,7 @@ onMounted(async () => {
             max-width="160"
         >
           <v-img
-              :src="apiGetCoverFileUrl(album.coverUrl)"
+              :src="albumCoverUrl[album.id]"
               alt="专辑封面"
               height="120"
               width="120"

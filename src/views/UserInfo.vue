@@ -1,7 +1,7 @@
 <script setup>
     import { onMounted, ref } from 'vue';
     import { useAuthStore } from "@/stores/authStore.js";
-    import { apiUpdateUser, apiUpdatePassword, apiUploadAvatarFile } from "@/api/user-api.js";
+    import {apiUpdateUser, apiUpdatePassword, apiUploadAvatarFile, apiGetUserAvatarFileUrl} from "@/api/user-api.js";
 
     const authStore = useAuthStore();
     const user = authStore.user;
@@ -23,7 +23,7 @@
         const file = event.target.files[0];
         if (file) {
             selectedImgFile.value = file;
-            authStore.user.avatarUrl = URL.createObjectURL(file);
+            userAvatarUrl.value = URL.createObjectURL(file);
             console.log("📂 选中文件:", file.name);
         } else {
             console.warn("⚠ 没有选中文件");
@@ -74,6 +74,7 @@
         }
     };
 
+    const userAvatarUrl = ref('');
     onMounted(async () => {
         if (!authStore.user?.username) {
             console.error('用户名不存在');
@@ -81,6 +82,7 @@
         }
         try {
             await authStore.fetchUser(authStore.user.username);
+            userAvatarUrl.value = await apiGetUserAvatarFileUrl(authStore.user.avatarUrl);
         } catch (error) {
             console.error('获取用户失败:', error);
         }
@@ -95,8 +97,8 @@
             <v-row align="center" class="mb-6">
                 <v-col cols="12" md="4" class="text-center">
                     <v-avatar size="200" class="elevation-4">
-                        <v-img v-if="authStore.user.avatarUrl"
-                               :src="authStore.user.avatarUrl"
+                        <v-img v-if="userAvatarUrl"
+                               :src="userAvatarUrl"
                                cover></v-img>
                         <v-icon v-else size="100" color="grey">mdi-account-circle</v-icon>
                     </v-avatar>
@@ -157,8 +159,8 @@
 
                 <div class="text-center mb-6">
                     <v-avatar size="150" class="elevation-4 mb-4">
-                        <v-img v-if="authStore.user.avatarUrl"
-                               :src="authStore.user.avatarUrl"
+                        <v-img v-if="userAvatarUrl"
+                               :src="userAvatarUrl"
                                cover></v-img>
                         <v-icon v-else size="80" color="grey">mdi-account-circle</v-icon>
                     </v-avatar>

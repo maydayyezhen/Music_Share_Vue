@@ -1,12 +1,11 @@
 import axios from './axiosInstance';
-import { apiGetFileUrl } from "@/api/file-api.js";
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 
 //GET
 export const apiGetUserByUsername = (username) => {
     return axios.get(`/users/${username}`, {
-        withCredentials: true
     });
 };
 
@@ -19,26 +18,25 @@ export const apiRegister = (name,password) => {
     }
     )
 }
-export const apiLogin = (username, password, rememberMe = true) => {
-    // 构建表单数据
-    const formData = new URLSearchParams();
-    formData.append('username', username);
-    formData.append('password', password);
-    formData.append('remember-me',  rememberMe.toString());  // 添加 remember-me 参数
 
-    return axios.post(`/login`, formData, {
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded', // 设置表单数据的 Content-Type
-        },
-        withCredentials: true,  // 确保携带 Cookie
-    });
+export const apiLogin = async (username, password) => {
+    try {
+        const response = await axios.post('/users/login', { // 使用 POST 请求的 body
+            username: username,  // 传递用户名
+            password: password   // 传递密码
+        });
+        return response.data.token;
+    } catch (error) {
+        console.error('登录失败', error);
+        alert('登录失败，请检查用户名和密码');
+    }
 };
 
+
+
+
 export const apiLogout = () => {
-    return axios.post(`/logout`, null, {
-        withCredentials: true
-    }
-    )
+    return axios.post(`/users/logout`)
 }
 
 // GET
@@ -84,15 +82,11 @@ export const apiDeleteAvatarFileById = (name) => {
 
 // 文件操作
 // 获取头像URL
-export const apiGetAvatarFileUrl = (fileUrl) => {
-    return apiGetFileUrl(fileUrl);
-};
-
-// 通过用户ID获取头像URL
-export const apiGetAvatarFileUrlByUserId = async (name) => {
-    if (id === null) return '';
-    const response = await axios.get(`/users/${name}/avatarUrl`);
-    return `${API_BASE_URL}/${response.data}`;
+export const apiGetUserAvatarFileUrl = async (fileUrl) => {
+    const res = await axios.get(fileUrl, {
+        responseType: 'blob',
+    })
+    return URL.createObjectURL(res.data)
 };
 
 // 更新角色

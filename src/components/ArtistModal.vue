@@ -29,12 +29,12 @@ const avatarUrl = ref('')
 // 初始化 artistData
 watch(
     () => props.artistData,
-    (newArtist) => {
+    async (newArtist) => {
       if (props.mode === 'edit' && newArtist) {
-        currentArtist.value = { ...newArtist }
-        avatarUrl.value = apiGetArtistAvatarFileUrl(newArtist.avatarUrl)
+        currentArtist.value = {...newArtist}
+        avatarUrl.value = await apiGetArtistAvatarFileUrl(newArtist.avatarUrl)
       } else {
-        currentArtist.value = { ...Artist }
+        currentArtist.value = {...Artist}
         avatarUrl.value = ''
       }
     },

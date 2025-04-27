@@ -1,8 +1,9 @@
 <script setup>
 import LoginDialog from "@/components/LoginDialog.vue";
-import {ref} from "vue"; // 引入弹窗组件
+import {onMounted, ref, watch} from "vue"; // 引入弹窗组件
 import { useAuthStore } from '@/stores/authStore';
 import router from "@/router/index.js";
+import {apiGetArtistAvatarFileUrl} from "@/api/artist-api.js";
 const authStore = useAuthStore();
 const dialogVisible = ref(false)
 
@@ -12,6 +13,20 @@ const selectItem = (item) => {
     router.push('/user_info');
   isOpen.value = false;
 };
+
+const userAvatarUrl = ref('');
+watch(
+    () => authStore.user.avatarUrl,
+    async (newUrl) => {
+      if (newUrl) {
+        userAvatarUrl.value = await apiGetArtistAvatarFileUrl(newUrl);
+      } else {
+        userAvatarUrl.value = ''; // 或默认头像
+      }
+    },
+    { immediate: true }
+);
+
 
 </script>
 
@@ -67,8 +82,8 @@ const selectItem = (item) => {
               style="padding: 0;"
           >
             <v-avatar size="32">
-              <v-img v-if="authStore.user.avatarUrl"
-                     :src="authStore.user.avatarUrl"
+              <v-img v-if="userAvatarUrl"
+                     :src="userAvatarUrl"
                      height="50"
                      width="50"
                      cover></v-img>

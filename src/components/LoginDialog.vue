@@ -16,10 +16,12 @@ const registered = ref(false);
 const setRegister = () => {
   registered.value = !registered.value;
 }
+
 const register = async () => {
   try {
     const response = await apiRegister(username.value, password.value);
     alert(response.data);
+    registered.value = false;
   } catch (error) {
     if (error.response && error.response.data) {
       alert(error.response.data);
@@ -31,25 +33,19 @@ const register = async () => {
 
 const login = async () => {
   try{
-    const response = await apiLogin(username.value, password.value);
-    alert(response.data);
-    const dataResponse = await apiGetUserByUsername(username.value);
-    const user = dataResponse.data;
-    authStore.login();
-    authStore.saveUser(user);
-    username.value ='';
-    password.value = '';
+    await authStore.login(username.value, password.value);
+    await router.push(`/${authStore.user.role}`);
     visible.value = false;
-    await router.push(`/${user.role}`);
   }
   catch (error) {
     if (error.response && error.response.data) {
       alert(error.response.data);
-    } else {
+    }
       alert("登录失败，请稍后重试");
     }
+  username.value ='';
+  password.value = '';
   }
-}
 </script>
 
 <template>

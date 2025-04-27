@@ -41,6 +41,9 @@ export const apiUpdateArtist = (artistData) =>{
 }
 
 //获取歌手头像URL
-export  const apiGetArtistAvatarFileUrl = (fileUrl) => {
-    return apiGetFileUrl(fileUrl);
+export  const apiGetArtistAvatarFileUrl = async (fileUrl) => {
+    const res = await axios.get(fileUrl, {
+        responseType: 'blob',
+    })
+    return URL.createObjectURL(res.data)
 }

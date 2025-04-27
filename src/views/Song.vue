@@ -40,18 +40,16 @@ const loadLRC = async () => {
   lyrics.value = parseLRC(text)
 }
 
-const togglePlayPause = (currentSong) => {
-  if(currentMusic.currentSong.id === currentSong.id) {
-    if(currentMusic.isPlaying) {
+const togglePlayPause = async (currentSong) => {
+  if (currentMusic.currentSong.id === currentSong.id) {
+    if (currentMusic.isPlaying) {
       currentMusic.pause();
-    }
-    else {
+    } else {
       currentMusic.play();
     }
-  }
-  else {
+  } else {
     currentMusic.setCurrentPlayList([song.value]);
-    currentMusic.setCurrentAlbumUrlList([apiGetCoverFileUrl(album.value.coverUrl)]);
+    currentMusic.setCurrentAlbumUrlList([albumCoverUrl.value]);
     currentMusic.setCurrentSong(0);
   }
 };
@@ -82,10 +80,11 @@ const coverImageKey = ref(Date.now());
 const refreshCoverImage = () => {
   coverImageKey.value = Date.now()
 }
-
+const albumCoverUrl = ref('');
 const refreshAll = async () =>{
   await getSongById(route.params.id);
   await getAlbumBySongId(route.params.id);
+  albumCoverUrl.value = await apiGetCoverFileUrl(album.value.coverUrl);
   refreshCoverImage();
   await loadLRC();
 }
@@ -104,7 +103,7 @@ onMounted(async () => {
       <v-col cols="12" md="4" class="text-center">
         <v-img
             :key="coverImageKey"
-            :src="apiGetCoverFileUrl(album.coverUrl)"
+            :src="albumCoverUrl"
             alt="专辑封面"
             class="mx-auto rounded-lg elevation-4"
             height="200"

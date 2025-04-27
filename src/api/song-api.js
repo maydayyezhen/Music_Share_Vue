@@ -1,5 +1,6 @@
 import axios from './axiosInstance';
 import {apiGetFileUrl} from "@/api/file-api.js";
+import {apiGetCoverFileUrl} from "@/api/album-api.js";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -77,15 +78,17 @@ export const apiDeleteLrcFileBySongId = (id) => {
 
 //文件操作
 //获取音频URL
-export const apiGetAudioFileUrl = (fileUrl) => {
-    return apiGetFileUrl(fileUrl);
+export const apiGetAudioFileUrl = async (fileUrl) => {
+    const res = await axios.get(fileUrl, {
+        responseType: 'blob',
+    })
+    return URL.createObjectURL(res.data)
 }
 
 
 export const apiGetLyric= async (fileUrl) => {
     const response = await axios.get(fileUrl, {
-        withCredentials: true, // 确保带上 cookie/session
-        responseType: 'text'   // 明确告诉 axios 返回文本
+        responseType: 'text'
     });
     return response.data;
 }
@@ -94,8 +97,8 @@ export const apiGetLyric= async (fileUrl) => {
 export const apiGetCoverFileUrlBySongId = async (id) => {
     if (id === null)
         return '';
-    const response = await axios.get(`/songs/${id}/coverUrl`);
-    return `${API_BASE_URL}/${response.data}`;
+    const coverUrl = await axios.get(`/songs/${id}/coverUrl`);
+    return await apiGetCoverFileUrl(coverUrl.data);
 }
 
 
