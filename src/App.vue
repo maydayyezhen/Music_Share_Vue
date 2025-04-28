@@ -2,22 +2,25 @@
 import Layout from "@/components/Layout.vue";
 import MusicPlayer from "@/components/MusicPlayer.vue";
 import {useMusicStore} from "@/stores/musicStore.js";
-import {useRouter} from "vue-router";
 import {onMounted, onUnmounted} from "vue";
 import {useAuthStore} from "@/stores/authStore.js";
 const musicStore = useMusicStore();
 const authStore = useAuthStore();
-const router = useRouter();
 
 const handleStorage = (event) => {
-  const currentUser = authStore.user?.username;
-  if (event.key === `token_${currentUser}` && event.newValue === null && authStore.isLoggedIn) {
-      alert('您已退出登录');
+  if (event.key === `token` && event.newValue === null && authStore.isLoggedIn) {
       authStore.logout(false);
     }
+  if (event.key === `token` && event.newValue !== null && !authStore.isLoggedIn) {
+    authStore.autoLogin()
+  }
 };
+
+
 onMounted(() => {
   window.addEventListener('storage', handleStorage);
+  if(authStore.isLoggedIn)
+  authStore.autoLogin()
 });
 
 onUnmounted(() => {

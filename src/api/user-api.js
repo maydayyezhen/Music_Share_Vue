@@ -1,11 +1,9 @@
 import axios from './axiosInstance';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
-
 //GET
-export const apiGetUserByUsername = (username) => {
-    return axios.get(`/users/${username}`, {
+export const apiGetUser = () => {
+    const token = localStorage.getItem('token');
+    return axios.get(`/users/${token}`, {
     });
 };
 
@@ -20,16 +18,11 @@ export const apiRegister = (name,password) => {
 }
 
 export const apiLogin = async (username, password) => {
-    try {
-        const response = await axios.post('/users/login', { // 使用 POST 请求的 body
-            username: username,  // 传递用户名
-            password: password   // 传递密码
+        const response = await axios.post('/users/login', {
+            username: username,
+            password: password
         });
         return response.data.token;
-    } catch (error) {
-        console.error('登录失败', error);
-        alert('登录失败，请检查用户名和密码');
-    }
 };
 
 

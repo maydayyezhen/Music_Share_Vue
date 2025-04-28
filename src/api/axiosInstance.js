@@ -1,9 +1,8 @@
 // src/api/axiosInstance.js
 import axios from 'axios';
 import {useAuthStore} from "@/stores/authStore.js";
-import router from "@/router/index.js";
 
-const API_BASE_URL = 'http://localhost:8080'; // 你后端的地址
+const API_BASE_URL = 'http://localhost:8080';
 
 const axiosInstance = axios.create({
     baseURL: API_BASE_URL
@@ -12,15 +11,10 @@ const axiosInstance = axios.create({
 // 添加请求拦截器，自动附带 token
 axiosInstance.interceptors.request.use(
     (config) => {
-        const authStore = useAuthStore();
-        const currentUser = authStore.currentUser;
-        if (currentUser) {
-            const token = localStorage.getItem(`token_${currentUser}`);
+            const token = localStorage.getItem(`token`);
             if (token) {
                 config.headers['Authorization'] = `Bearer ${token}`;
             }
-        }
-
         return config;
     },
     (error) => Promise.reject(error)

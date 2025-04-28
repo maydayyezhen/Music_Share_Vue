@@ -1,6 +1,4 @@
 import axios from './axiosInstance';
-import {apiGetFileUrl} from "@/api/file-api.js";
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 //GET
 //获取所有专辑
@@ -50,6 +48,7 @@ export const apiDeleteCoverFileById = (id) => {
 
 //获取封面URL
 export const apiGetCoverFileUrl = async (fileUrl) => {
+    if(!fileUrl) return null;
     const res = await axios.get(fileUrl, {
         responseType: 'blob',
     })

@@ -5,12 +5,12 @@ import {
   apiDeleteAudioFileBySongId,
   apiDeleteLrcFileBySongId,
   apiDeleteSongById,
-  apiGetCoverFileUrlBySongId,
   apiUpdateSong
 } from "@/api/song-api.js";
 import router from "@/router/index.js";
 import {useAuthStore} from "@/stores/authStore.js";
 import AddMusic from "@/components/SongModal.vue";
+import {apiGetCoverFileUrl} from "@/api/album-api.js";
 
 const props = defineProps(['songs']);
 const editingSong = ref(null);//用于存储被编辑歌曲的数据
@@ -86,7 +86,7 @@ watch(
     async (newSongs) => {
       if (!newSongs || newSongs.length === 0) return;
       for (const [index, song] of newSongs.entries()) {
-        urlMap.value[index] = await apiGetCoverFileUrlBySongId(song.id);
+        urlMap.value[index] = await apiGetCoverFileUrl(song.album.coverUrl);
       }
       coverUrls.value = urlMap.value;
     },

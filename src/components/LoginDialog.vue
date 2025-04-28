@@ -2,8 +2,7 @@
 import {ref} from 'vue'
 import router from "@/router/index.js";
 import { useAuthStore } from '@/stores/authStore';
-import {apiGetUserByUsername, apiLogin, apiRegister} from "@/api/user-api.js";
-import {User} from "@/models/user.js";
+import {apiRegister} from "@/api/user-api.js";
 
 const authStore = useAuthStore();
 
@@ -41,8 +40,8 @@ const login = async () => {
     if (error.response && error.response.data) {
       alert(error.response.data);
     }
-      alert("登录失败，请稍后重试");
-    }
+    localStorage.removeItem("token")
+  }
   username.value ='';
   password.value = '';
   }
