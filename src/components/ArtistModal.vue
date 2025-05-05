@@ -3,6 +3,7 @@ import { ref, watch} from 'vue'
 import { apiCreateArtist, apiUpdateArtist, apiUploadAvatarFile } from '@/api/artist-api.js'
 import { Artist } from '@/models/artist.js'
 import { apiGetArtistAvatarFileUrl } from '@/api/artist-api.js'
+import CommentSection from "@/components/CommentSection.vue"
 
 const props = defineProps({
   modelValue: Boolean,
@@ -73,7 +74,6 @@ const upload = async () => {
   }
 }
 
-
 </script>
 
 <template>
@@ -108,4 +108,9 @@ const upload = async () => {
       </v-card-actions>
     </v-card>
   </v-dialog>
+
+  <!-- 添加评论区组件 -->
+  <div v-if="artist && artist.id">
+    <CommentSection content-type="artist" :content-id="artist.id" />
+  </div>
 </template>

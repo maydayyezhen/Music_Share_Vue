@@ -11,6 +11,7 @@ import router from "@/router/index.js";
 import {useAuthStore} from "@/stores/authStore.js";
 import AddMusic from "@/components/SongModal.vue";
 import {apiGetCoverFileUrl} from "@/api/album-api.js";
+import CommentSection from "@/components/CommentSection.vue";
 
 const props = defineProps(['songs']);
 const editingSong = ref(null);//用于存储被编辑歌曲的数据
@@ -21,6 +22,8 @@ const songs = ref([])
 const isSongModalVisible = ref(false)
 const selectedSong = ref(null) // 当前要编辑的歌曲
 const coverUrls = ref({});
+// 选中的歌曲(用于显示评论)
+const selectedSongForComments = ref(null);
 
 const startEditSong = (song) => {
   editingSong.value = {...song};
@@ -104,7 +107,16 @@ const filteredItems = computed(() =>
     )
 )
 
-
+// 选中一首歌曲，显示或隐藏其评论
+const toggleSongComments = (song) => {
+  if (selectedSongForComments.value && selectedSongForComments.value.id === song.id) {
+    // 如果点击的是当前已选中的歌曲，则取消选中
+    selectedSongForComments.value = null;
+  } else {
+    // 否则选中该歌曲
+    selectedSongForComments.value = song;
+  }
+};
 
 </script>
 
@@ -133,125 +145,148 @@ const filteredItems = computed(() =>
         clearable
     />
     <!-- 歌曲列表 -->
-    <v-row v-for="(song, index) in filteredItems" :key="index" class="mb-3">
-      <v-col>
-        <v-card class="compact-card">
+    <div v-for="(song, index) in filteredItems" :key="index" class="mb-3">
+      <v-card 
+        class="compact-card" 
+        :class="{ 'selected-song': selectedSongForComments && selectedSongForComments.id === song.id }"
+      >
+        <v-row no-gutters align="center">
+          <!-- 封面图 -->
+          <v-col cols="auto">
+            <v-img
+                :src="coverUrls[index]"
+                alt="歌曲封面"
+                width="80"
+                height="80"
+                class="rounded-lg elevation-1 border"
+                cover
+            ></v-img>
+          </v-col>
 
-          <v-row no-gutters align="center">
-            <!-- 封面图 -->
-            <v-col cols="auto">
-              <v-img
-                  :src="coverUrls[index]"
-                  alt="歌曲封面"
-                  width="80"
-                  height="80"
-                  class="rounded-lg elevation-1 border"
-                  cover
-              ></v-img>
-            </v-col>
+          <!-- 歌名 -->
+          <v-col cols="3" style="min-width: 0;">
+            <v-card-title class="ellipsis">
+              <v-label
+                  @click="goToSong(song.id)"
+                  class="ellipsis"
+                  style="color: black; font-weight: bold;"
+              >
+                {{ song.title }}
+              </v-label>
+            </v-card-title>
+          </v-col>
 
-            <!-- 歌名 -->
-            <v-col cols="3" style="min-width: 0;">
-              <v-card-title class="ellipsis">
-                <v-label
-                    @click="goToSong(song.id)"
-                    class="ellipsis"
-                    style="color: black; font-weight: bold;"
-                >
-                  {{ song.title }}
-                </v-label>
-              </v-card-title>
-            </v-col>
-
-            <!-- 歌手和专辑 -->
-            <v-col cols="5" style="min-width: 0;">
-              <v-card-subtitle style="width: 100%;">
-                <v-btn
-                    variant="text"
-                    size="small"
-                    @click="goToArtist(song.artist.id)"
-                    class="ellipsis"
-                    style="max-width: 100%; text-transform: none;"
-                >
-                  {{ song.artist.name }}
-                </v-btn>
-                <br />
-                <v-btn
-                    variant="text"
-                    size="small"
-                    @click="goToAlbum(song.album.id)"
-                    class="ellipsis"
-                    style="max-width: 100%; text-transform: none;"
-                >
-                  {{ song.album.title }} | {{ song.duration }}
-                </v-btn>
-              </v-card-subtitle>
-            </v-col>
-
-            <!-- 操作按钮 -->
-            <v-col cols="3" class="d-flex align-center justify-end" style="gap: 4px;">
-              <v-btn icon variant="text" @click="togglePlayPause(song)" >
-                <span v-if="currentMusic.currentSong.id===song.id && currentMusic.isPlaying" class="material-symbols-outlined">pause_circle</span>
-                <span v-if="currentMusic.currentSong.id!==song.id||!currentMusic.isPlaying" class="material-symbols-outlined">play_arrow</span>
+          <!-- 歌手和专辑 -->
+          <v-col cols="5" style="min-width: 0;">
+            <v-card-subtitle style="width: 100%;">
+              <v-btn
+                  variant="text"
+                  size="small"
+                  @click="goToArtist(song.artist.id)"
+                  class="ellipsis"
+                  style="max-width: 100%; text-transform: none;"
+              >
+                {{ song.artist.name }}
               </v-btn>
-
-              <v-btn icon variant="text" v-if="authStore.user.role === 'admin'" @click="startEditSong(song)" class="me-1">
-                <span class="material-symbols-outlined">edit_square</span>
+              <br />
+              <v-btn
+                  variant="text"
+                  size="small"
+                  @click="goToAlbum(song.album.id)"
+                  class="ellipsis"
+                  style="max-width: 100%; text-transform: none;"
+              >
+                {{ song.album.title }} | {{ song.duration }}
               </v-btn>
-              <v-btn icon variant="text" v-if="authStore.user.role === 'admin'" @click="deleteSong(song)">
-                <span class="material-symbols-outlined">delete</span>
-              </v-btn>
-            </v-col>
-          </v-row>
+            </v-card-subtitle>
+          </v-col>
 
-          <!-- 编辑区 -->
-          <v-row
-              v-if="editingSong && editingSong.id === song.id"
-              class="pa-4"
-          >
-            <v-col>
-              <v-text-field
-                  v-model="editingSong.title"
-                  label="歌曲名称"
-                  dense
-              ></v-text-field>
-            </v-col>
+          <!-- 操作按钮 -->
+          <v-col cols="3" class="d-flex align-center justify-end" style="gap: 4px;">
+            <v-btn icon variant="text" @click="togglePlayPause(song)" >
+              <span v-if="currentMusic.currentSong.id===song.id && currentMusic.isPlaying" class="material-symbols-outlined">pause_circle</span>
+              <span v-if="currentMusic.currentSong.id!==song.id||!currentMusic.isPlaying" class="material-symbols-outlined">play_arrow</span>
+            </v-btn>
 
-            <v-col>
-              <v-text-field
-                  v-model="editingSong.duration"
-                  label="时长"
-                  dense
-              ></v-text-field>
-            </v-col>
+            <!-- 添加评论按钮 -->
+            <v-btn icon variant="text" @click="toggleSongComments(song)">
+              <span class="material-symbols-outlined">comment</span>
+            </v-btn>
 
-            <v-col>
-              <v-btn @click="updateSong" color="primary" block>
-                保存
-              </v-btn>
-            </v-col>
-          </v-row>
+            <v-btn icon variant="text" v-if="authStore.user.role === 'admin'" @click="startEditSong(song)" class="me-1">
+              <span class="material-symbols-outlined">edit_square</span>
+            </v-btn>
 
-        </v-card>
-      </v-col>
-    </v-row>
-    <!-- 添加歌曲弹窗 -->
-    <AddMusic
-        v-if="isSongModalVisible"
-        v-model:visible="isSongModalVisible"
+            <!-- 删除歌曲按钮 -->
+            <v-btn icon variant="text" v-if="authStore.user.role === 'admin'" @click="deleteSong(song)" class="me-1">
+              <span class="material-symbols-outlined">delete</span>
+            </v-btn>
+          </v-col>
+        </v-row>
+      </v-card>
+
+      <!-- 评论区域，只在选中歌曲时显示 -->
+      <div v-if="selectedSongForComments && selectedSongForComments.id === song.id" class="comment-container">
+        <CommentSection content-type="song" :content-id="song.id" />
+      </div>
+    </div>
+
+    <v-dialog v-if="editingSong" v-model="editingSong" max-width="600px">
+      <!-- 编辑表单内容 -->
+      <v-card>
+        <v-card-title class="text-h5">
+          编辑歌曲
+        </v-card-title>
+        <v-card-text>
+          <v-text-field v-model="editingSong.title" label="歌曲名"></v-text-field>
+          <!-- 其他编辑字段 -->
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="primary" @click="updateSong">保存</v-btn>
+          <v-btn color="error" @click="editingSong = null">取消</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <AddMusic 
+      v-model:visible="isSongModalVisible" 
+      :song="selectedSong"
+      @close="isSongModalVisible = false; emit('reloadSongs')"
     />
   </v-container>
 </template>
 
 <style scoped>
 .ellipsis {
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  display: block;
 }
 
 .compact-card {
-  padding: 12px;
+  padding: 4px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.compact-card:hover {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+.selected-song {
+  background-color: rgba(0, 0, 0, 0.04);
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.comment-container {
+  border-radius: 0 0 8px 8px;
+  margin-top: -16px;
+  margin-bottom: 16px;
+  overflow: hidden;
 }
 </style>
 

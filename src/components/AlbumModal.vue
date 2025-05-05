@@ -12,6 +12,7 @@ import {
 } from "@/api/album-api.js";
 import {Album} from "@/models/album.js";
 import {Artist} from "@/models/artist.js";
+import CommentSection from "@/components/CommentSection.vue";
 
 // Props: 专辑初始值和是否编辑
 const props = defineProps({
@@ -196,5 +197,10 @@ onMounted(async () => {
         v-model="artistModalVisible"
         @artist-created="handleArtistCreated"
     />
+
+    <!-- 添加评论区组件 -->
+    <div v-if="currentAlbum && currentAlbum.id">
+      <CommentSection content-type="album" :content-id="currentAlbum.id" />
+    </div>
   </v-dialog>
 </template>

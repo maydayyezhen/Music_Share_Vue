@@ -2,6 +2,7 @@
 import {nextTick, onMounted, ref, watch} from "vue";
 import ArtistModal from "@/components/ArtistModal.vue";
 import AlbumModal from "@/components/AlbumModal.vue";
+import CommentSection from "@/components/CommentSection.vue";
 import {apiGetAlbumsByArtistId, apiGetAllAlbums, apiGetCoverFileUrl} from "@/api/album-api.js";
 import {apiGetAllArtists, apiGetArtistAvatarFileUrl} from "@/api/artist-api.js";
 import {apiCreateSong, apiUpdateSong, apiUploadAudioFile, apiUploadLrcFile} from "@/api/song-api.js";
@@ -395,6 +396,11 @@ const visible = defineModel('visible')
       mode="create"
       @album-created="handelAlbumCreated"
   />
+
+  <!-- 添加评论区组件 -->
+  <div v-if="props.song && props.song.id">
+    <CommentSection content-type="song" :content-id="props.song.id" />
+  </div>
 </template>
 
 <style scoped>
